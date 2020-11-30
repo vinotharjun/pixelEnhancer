@@ -5,6 +5,7 @@ import glob
 import os
 import argparse
 import yaml
+import random
 
 parser = argparse.ArgumentParser(description="create a dataset")
 parser.add_argument(
@@ -19,6 +20,9 @@ parser.add_argument(
     type=int,
     choices=[4, 2, 8, 16],
     help="super resolution upscale factor",
+)
+parser.add_argument(
+    "--compress", default=0, type=int, choices=[0, 1], help="compress image"
 )
 opt = parser.parse_args()
 
@@ -81,4 +85,8 @@ if __name__ == "__main__":
             save_path = osp.join(noise_dir, "{}_{:03}.png".format(img_name, idx))
             cnt += 1
             print("collect:", cnt, save_path)
-            Image.fromarray(patch).save(save_path)
+            if opt.compress == 1:
+                save_path = ".".join(save_path.split(".")[:-1]) + ".png"
+                Image.fromarray(patch).save(save_path, "JPEG", quality=60)
+            else:
+                Image.fromarray(patch).save(save_path)

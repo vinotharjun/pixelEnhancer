@@ -25,7 +25,13 @@ parser.add_argument(
     help="super resolution upscale factor",
 )
 parser.add_argument(
-    "--compress", default=True, type=bool, choices=[True, False], help="compress image"
+    "--compress", default=0, type=int, choices=[0, 1], help="compress image"
+)
+parser.add_argument(
+    "--datatype",
+    default="tdsr",
+    choices=["tdsr", "sdsr"],
+    help="source domain or target domain",
 )
 opt = parser.parse_args()
 
@@ -54,52 +60,65 @@ if not os.path.exists(lr_dir):
     os.makedirs(lr_dir)
 
 with torch.no_grad():
-    """
-    # for file in tqdm(source_files, desc='Generating images from source'):
-    #     # load HR image
-        input_img = Image.open(file).convert("RGB")
-        input_img = TF.to_tensor(input_img)
+    if opt.datatype == "sdsr":
+        for file in tqdm(source_files, desc="Generating images from source"):
+            #     # load HR image
+            input_img = Image.open(file).convert("RGB")
+            input_img = TF.to_tensor(input_img)
 
-        # Resize HR image to clean it up and make sure it can be resized again
-        resize2_img = utils.imresize(input_img, 1.0 / opt.cleanup_factor, True)
-        _, w, h = resize2_img.size()
-        w = w - w % opt.upscale_factor
-        h = h - h % opt.upscale_factor
-        resize2_cut_img = resize2_img[:, :w, :h]
+            # Resize HR image to clean it up and make sure it can be resized again
+            resize2_img = utils.imresize(input_img, 1.0 / opt.cleanup_factor, True)
+            _, w, h = resize2_img.size()
+            w = w - w % opt.upscale_factor
+            h = h - h % opt.upscale_factor
+            resize2_cut_img = resize2_img[:, :w, :h]
 
-        # Save resize2_cut_img as HR image
-        path = os.path.join(hr_dir, os.path.basename(file))
-        TF.to_pil_image(resize2_cut_img).save(path, 'PNG')
+            # Save resize2_cut_img as HR image
+            path = os.path.join(hr_dir, os.path.basename(file))
+            TF.to_pil_image(resize2_cut_img).save(path, "PNG")
 
-      #     # Generate resize3_cut_img and apply model
-        resize3_cut_img = utils.imresize(resize2_cut_img, 1.0 / opt.upscale_factor, True)
-
-    #     # Save resize3_cut_noisy_img as LR image
-        path = os.path.join(lr_dir, os.path.basename(file))
-        TF.to_pil_image(resize3_cut_img).save(path, 'PNG')
-    """
-    for file in tqdm(target_files, desc="Generating images from target"):
-        # load HR image
-        input_img = Image.open(file).convert("RGB")
-        input_img = TF.to_tensor(input_img)
-        input_img = utils.imresize(input_img, 1.0 / opt.cleanup_factor, True)
-
-        # Save input_img as HR image
-        path = os.path.join(hr_dir, os.path.basename(file))
-        TF.to_pil_image(input_img).save(".".join(path.split(".")[:-1]) + ".png", "PNG")
-
-        # generate resized version of input_img
-        resize_img = utils.imresize(input_img, 1.0 / opt.upscale_factor, True)
-
-        # Save resize_noisy_img as LR image
-        path = os.path.join(lr_dir, os.path.basename(file))
-        if opt.compress:
-            TF.to_pil_image(resize_img).save(
-                ".".join(path.split(".")[:-1]) + ".jpg",
-                "JPEG",
-                quality=random.randint(2, 10) * 10,
+            #     # Generate resize3_cut_img and apply model
+            resize3_cut_img = utils.imresize(
+                resize2_cut_img, 1.0 / opt.upscale_factor, True
             )
-        else:
-            TF.to_pil_image(resize_img).save(
+
+            #     # Save resize3_cut_noisy_img as LR image
+            path = os.path.join(lr_dir, os.path.basename(file))
+            if opt.compress == 1:
+                TF.to_pil_image(resize3_cut_img).save(
+                    ".".join(path.split(".")[:-1]) + ".jpg",
+                    "JPEG",
+                    quality=random.randint(2, 10) * 10,
+                )
+            else:
+                TF.to_pil_image(resize3_cut_img).save(
+                    ".".join(path.split(".")[:-1]) + ".png", "PNG"
+                )
+    else:
+        for file in tqdm(target_files, desc="Generating images from target"):
+            # load HR image
+            input_img = Image.open(file).convert("RGB")
+            input_img = TF.to_tensor(input_img)
+            input_img = utils.imresize(input_img, 1.0 / opt.cleanup_factor, True)
+
+            # Save input_img as HR image
+            path = os.path.join(hr_dir, os.path.basename(file))
+            TF.to_pil_image(input_img).save(
                 ".".join(path.split(".")[:-1]) + ".png", "PNG"
             )
+
+            #        generate resized version of input_img
+            resize_img = utils.imresize(input_img, 1.0 / opt.upscale_factor, True)
+
+            # Save resize_noisy_img as LR image
+            path = os.path.join(lr_dir, os.path.basename(file))
+            if opt.compress == 1:
+                TF.to_pil_image(resize_img).save(
+                    ".".join(path.split(".")[:-1]) + ".jpg",
+                    "JPEG",
+                    quality=random.randint(2, 10) * 10,
+                )
+            else:
+                TF.to_pil_image(resize_img).save(
+                    ".".join(path.split(".")[:-1]) + ".png", "PNG"
+                )
