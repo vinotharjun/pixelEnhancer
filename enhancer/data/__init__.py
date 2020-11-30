@@ -8,7 +8,7 @@ def create_dataloader(dataset, dataset_opt, opt=None, sampler=None):
         num_workers = dataset_opt["n_workers"]
         batch_size = dataset_opt["batch_size"]
         shuffle = True
-        return torch.utils.data.DataLoader (
+        return torch.utils.data.DataLoader(
             dataset,
             batch_size=batch_size,
             shuffle=shuffle,
@@ -25,7 +25,7 @@ def create_dataloader(dataset, dataset_opt, opt=None, sampler=None):
 
 def create_dataset(opt):
     if mode == opt["mode"]:
-        from .lqgt import LGQT as D
+        from .lqgt import LQGT as D
     else:
         raise NotImplementedError("Dataset [{:s}] is not recognized.".format(mode))
     lq_path = opt["lr_path"]
@@ -36,5 +36,5 @@ def create_dataset(opt):
         noiseds_path = None
     gtsize = opt["crop_size"]
     scale = opt["scale"]
-    dataset = D(lq_path, gt_path, noiseds_path, gtsize, scale))
+    dataset = D(lq_path, gt_path, noiseds_path, gtsize, scale)
     return dataset

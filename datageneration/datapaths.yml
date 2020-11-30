@@ -1,0 +1,13 @@
+coco:
+  source: ".././dataset/coco/source"
+  target: ".././dataset/coco/source"
+ffhq:
+  source: ".././dataset/ffhq/source"
+  target: ".././dataset/ffhq/target"
+df2k:
+  source: ".././dataset/df2k/source"
+  target: ".././dataset/df2k/target"
+datasets:
+  coco: ".././dataset/coco"
+  ffhq: ".././dataset/ffhq"
+  df2k: ".././dataset/df2k"

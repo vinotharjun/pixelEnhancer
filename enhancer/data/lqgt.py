@@ -5,8 +5,16 @@ import torch.utils.data as data
 from .noisedataset import noiseDataset
 
 
-class LGQT(data.Dataset):
-    def __init__(self, lq_path, gt_path, noiseds_path=None, gtsize=128, scale=4):
+class LQGT(data.Dataset):
+    def __init__(
+        self,
+        lq_path,
+        gt_path,
+        noiseds_path=None,
+        gtsize=128,
+        scale=4,
+        normalize_noise=True,
+    ):
         super().__init__()
         self.GT_SIZE = gtsize
         self.scale = scale
@@ -17,7 +25,9 @@ class LGQT(data.Dataset):
         self.random_scale_list = [1]
         self.noiseds_path = noiseds_path
         if self.noiseds_path is not None:
-            self.noises = noiseDataset(noiseds_path, self.GT_SIZE / self.scale)
+            self.noises = noiseDataset(
+                noiseds_path, self.GT_SIZE / self.scale, normalize=normalize_noise
+            )
         else:
             self.noises = None
 
@@ -70,6 +80,7 @@ class LGQT(data.Dataset):
             np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))
         ).float()
         if self.noises is not None:
+            print(self.noises)
             noise_rnd = np.random.randint(0, len(self.noises))
             noise = self.noises[noise_rnd]
             img_LQ = torch.clamp(img_LQ + noise, 0, 1)
