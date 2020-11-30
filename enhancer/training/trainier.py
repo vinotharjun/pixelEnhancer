@@ -1,5 +1,5 @@
 from enhancer import *
-from enhancer.losses import WassFeatureLoss
+from enhancer.losses import WassFeatureLoss, FeatureLoss
 from enhancer.utils import *
 from enhancer.inference import *
 
@@ -60,7 +60,7 @@ class GANTrainer:
         self.generator.load_state_dict(checkpoint["generator_state_dict"])
         self.discriminator.load_state_dict(checkpoint["discriminator_state_dict"])
 
-    def train_model(self, start=0, end=100, b=0, eb=-1,isValidate=True):
+    def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=True):
         for epoch in range(start, end):
             if epoch == start:
                 b = b
@@ -127,7 +127,7 @@ class GANTrainer:
 
         for i, imgs in enumerate(self.train_loader):
             if i <= b and epoch == eb:
-                print(i)
+                print("skipping", i)
                 continue
             lr_imgs = imgs["lr"].to(device)
             hr_imgs = imgs["hr"].to(device)
@@ -195,15 +195,14 @@ class GANTrainer:
             del lr_imgs, hr_imgs, generated, score_real, score_fake
 
 
-
 class SimpleTrainer:
     def __init__(
         self,
         generator,
         train_loader,
         val_loader,
-        criterion = nn.L1Loss(),
         save_checkpoint_folder_path,
+        criterion=nn.L1Loss(),
         load_checkpoint_file_path=None,
         load=False,
         sample_interval=100,
@@ -214,7 +213,7 @@ class SimpleTrainer:
         self.val_loader = val_loader
         self.save_checkpoint_path = save_checkpoint_folder_path
         self.load_checkpoint_path = load_checkpoint_file_path
-        self.top_psnr = 0.0
+        self.top_psnr = -1.0
         self.sample_interval = sample_interval
         if load == True:
             if load_checkpoint_file_path is None:
@@ -235,7 +234,7 @@ class SimpleTrainer:
         path = self.save_checkpoint_path + "/{}.pt".format(checkpoint_file_name)
         torch.save(state, path)
         if is_best:
-            best_path = self.save_checkpoint + "/{}.pt".format(best_file_name)
+            best_path = self.save_checkpoint_path + "/{}.pt".format(best_file_name)
             shutil.copyfile(path, best_path)
 
     def load_checkpoint(self):
@@ -244,7 +243,7 @@ class SimpleTrainer:
             self.top_ssim = checkpoint["ssim"]
         self.generator.load_state_dict(checkpoint["generator_state_dict"])
 
-    def train_model(self, start=0, end=100, b=0, eb=-1,isValidate=False):
+    def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=False):
         for epoch in range(start, end):
             if epoch == start:
                 b = b
@@ -303,7 +302,7 @@ class SimpleTrainer:
 
         for i, imgs in enumerate(self.train_loader):
             if i <= b and epoch == eb:
-                print(i)
+                print("skipping", i)
                 continue
             lr_imgs = imgs["lr"].to(device)
             hr_imgs = imgs["hr"].to(device)
@@ -320,7 +319,7 @@ class SimpleTrainer:
                     self.save_checkpoint(state)
                     self.generator.eval()
                     print(
-                        "Epoch:{} [{}/{}] content loss :{}.format(
+                        "Epoch: {} [{}/{}] content loss :{}".format(
                             epoch,
                             i,
                             len(self.train_loader),
@@ -330,5 +329,3 @@ class SimpleTrainer:
                     losses_c.reset()
                     self.generator.train()
             del lr_imgs, hr_imgs, generated
-
-

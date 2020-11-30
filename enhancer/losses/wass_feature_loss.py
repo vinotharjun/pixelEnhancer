@@ -17,7 +17,7 @@ class WassFeatureLoss(nn.Module):
             self.register_buffer("mean", mean)
             self.register_buffer("std", std)
 
-        self.m_feat = torchvision.models.vgg16_bn(True).features.cuda().eval()
+        self.m_feat = torchvision.models.vgg16_bn(True).features.to(device).eval()
         for k, v in self.m_feat.named_parameters():
             v.requires_grad = False
         blocks = [
