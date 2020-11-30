@@ -5,15 +5,16 @@ import torch.utils.data
 def create_dataloader(dataset, dataset_opt, opt=None, sampler=None):
     phase = dataset_opt["phase"]
     if phase == "train":
-            num_workers = dataset_opt["n_workers"]
-            batch_size = dataset_opt["batch_size"]
-            shuffle = True
-        return torch.utils.data.DataLoader(
+        num_workers = dataset_opt["n_workers"]
+        batch_size = dataset_opt["batch_size"]
+        shuffle = True
+        return torch.utils.data.DataLoader (
             dataset,
             batch_size=batch_size,
             shuffle=shuffle,
             num_workers=num_workers,
             sampler=sampler,
+            drop_last=True,
             pin_memory=False,
         )
     else:
@@ -35,5 +36,5 @@ def create_dataset(opt):
         noiseds_path = None
     gtsize = opt["crop_size"]
     scale = opt["scale"]
-    dataset = D(lq_path, gt_path, noiseds_path=None, gtsize=128, scale=4))
+    dataset = D(lq_path, gt_path, noiseds_path, gtsize, scale))
     return dataset
