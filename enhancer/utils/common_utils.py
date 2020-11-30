@@ -1,4 +1,4 @@
-from enhancer.imports import *
+from enhancer import *
 
 
 def OrderedYaml():
