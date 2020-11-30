@@ -88,7 +88,7 @@ class LQGT(data.Dataset):
             noise = None
         if LQ_path is None:
             LQ_path = GT_path
-        return {"lr": img_LQ, "hr": img_GT, "noise": noise}
+        return {"lr": img_LQ, "hr": img_GT}
 
     def __len__(self):
         return len(self.paths_GT)

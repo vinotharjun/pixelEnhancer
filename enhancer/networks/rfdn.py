@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import rfdn_blocks as B
+from .rfdn_blocks import *
 
 
 def make_model(args, parent=False):
@@ -12,18 +12,18 @@ class RFDN(nn.Module):
     def __init__(self, in_nc=3, nf=50, num_modules=4, out_nc=3, upscale=4):
         super(RFDN, self).__init__()
 
-        self.fea_conv = B.conv_layer(in_nc, nf, kernel_size=3)
+        self.fea_conv = conv_layer(in_nc, nf, kernel_size=3)
 
-        self.B1 = B.RFDB(in_channels=nf)
-        self.B2 = B.RFDB(in_channels=nf)
-        self.B3 = B.RFDB(in_channels=nf)
-        self.B4 = B.RFDB(in_channels=nf)
-        self.c = B.conv_block(nf * num_modules, nf, kernel_size=1, act_type="lrelu")
+        self.B1 = RFDB(in_channels=nf)
+        self.B2 = RFDB(in_channels=nf)
+        self.B3 = RFDB(in_channels=nf)
+        self.B4 = RFDB(in_channels=nf)
+        self.c = conv_block(nf * num_modules, nf, kernel_size=1, act_type="lrelu")
 
-        self.LR_conv = B.conv_layer(nf, nf, kernel_size=3)
+        self.LR_conv = conv_layer(nf, nf, kernel_size=3)
 
-        upsample_block = B.pixelshuffle_block
-        self.upsampler = upsample_block(nf, out_nc, upscale_factor=4)
+        upsample_block = pixelshuffle_block
+        self.upsampler = upsample_block(nf, out_nc, upscale_factor=upscale)
         self.scale_idx = 0
 
     def forward(self, input):
