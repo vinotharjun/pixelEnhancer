@@ -77,11 +77,11 @@ class GANTrainer:
             ps = AverageMeter()
             for i, imgs in enumerate(self.val_loader):
                 lr_imgs, hr_imgs = imgs["lr"].to(device), imgs["hr"].to(device)
-                preds = self.generator(lr_imgs)
-                ssim_value = 0
-                psnr_value = 0
-                ss.update(ssim_value, lr_imgs.size(0))
-                ps.update(psnr_value, lr_imgs.size(0))
+                predicted = self.generator(lr_imgs)
+                ssim_value = ssim(predicted, hr_imgs)
+                psnr_value = psnr(predicted, hr_imgs)
+                ss.update(ssim_value.detach().item(), lr_imgs.size(0))
+                ps.update(psnr_value.detach().item(), lr_imgs.size(0))
                 print(
                     "Validating Image ", 1, "psnr :", psnr_value, " ssim :", ssim_value
                 )
@@ -260,9 +260,9 @@ class SimpleTrainer:
             ps = AverageMeter()
             for i, imgs in enumerate(self.val_loader):
                 lr_imgs, hr_imgs = imgs["lr"].to(device), imgs["hr"].to(device)
-                preds = self.generator(lr_imgs)
-                psnr_value = 0
-                ps.update(psnr_value, lr_imgs.size(0))
+                predicted = self.generator(lr_imgs)
+                psnr_value = psnr(predicted, hr_imgs)
+                ps.update(psnr_value.detach().item(), lr_imgs.size(0))
                 print("Validating Image ", 1, "psnr :", psnr_value)
             print("Validation Completed \n")
             print("PSNR :", ps.avg, "\n")
