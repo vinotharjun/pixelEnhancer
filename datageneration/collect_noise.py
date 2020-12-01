@@ -86,7 +86,7 @@ if __name__ == "__main__":
             cnt += 1
             print("collect:", cnt, save_path)
             if opt.compress == 1:
-                save_path = ".".join(save_path.split(".")[:-1]) + ".png"
-                Image.fromarray(patch).save(save_path, "JPEG", quality=60)
+                save_path = ".".join(save_path.split(".")[:-1]) + ".jpg"
+                Image.fromarray(patch).save(save_path, "JPEG", quality=70)
             else:
                 Image.fromarray(patch).save(save_path)

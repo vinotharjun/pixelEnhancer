@@ -7,64 +7,31 @@ from enhancer.utils import OrderedYaml
 Loader, Dumper = OrderedYaml()
 
 
-def parse(opt_path, is_train=True):
+def parse_yml(opt_path):
     with open(opt_path, mode="r") as f:
         opt = yaml.load(f, Loader=Loader)
-
-    opt["is_train"] = is_train
-    if opt["distortion"] == "sr":
-        scale = opt["scale"]
-
-    # datasets
+    # dataset parse
     for phase, dataset in opt["datasets"].items():
-        phase = phase.split("_")[0]
-        dataset["phase"] = phase
-        if opt["distortion"] == "sr":
-            dataset["scale"] = scale
-        is_lmdb = False
-        if dataset.get("dataroot_GT", None) is not None:
-            dataset["dataroot_GT"] = osp.expanduser(dataset["dataroot_GT"])
-            if dataset["dataroot_GT"].endswith("lmdb"):
-                is_lmdb = True
-        # if dataset.get('dataroot_GT_bg', None) is not None:
-        #     dataset['dataroot_GT_bg'] = osp.expanduser(dataset['dataroot_GT_bg'])
-        if dataset.get("dataroot_LQ", None) is not None:
-            dataset["dataroot_LQ"] = osp.expanduser(dataset["dataroot_LQ"])
-            if dataset["dataroot_LQ"].endswith("lmdb"):
-                is_lmdb = True
-        dataset["data_type"] = "lmdb" if is_lmdb else "img"
-        if dataset["mode"].endswith("mc"):  # for memcached
-            dataset["data_type"] = "mc"
-            dataset["mode"] = dataset["mode"].replace("_mc", "")
+        dataset["dataroot_GT"] = os.path.abspath(dataset["dataroot_GT"])
+        dataset["dataroot_LQ"] = os.path.abspath(dataset["dataroot_LQ"])
+        if phase == "train":
+            if dataset["noise_needed"] is True and dataset["noise_data"] is not None:
+                dataset["noise_data"] = os.path.abspath(dataset["noise_data"])
+            else:
+                dataset["noise_data"] = None
+                dataset["noise_needed"] = False
 
-    # path
-    for key, path in opt["path"].items():
-        if path and key in opt["path"] and key != "strict_load":
-            opt["path"][key] = osp.expanduser(path)
-    opt["path"]["root"] = osp.abspath(
-        osp.join(__file__, osp.pardir, osp.pardir, osp.pardir)
-    )
-    if is_train:
-        experiments_root = osp.join(opt["path"]["root"], "experiments", opt["name"])
-        opt["path"]["experiments_root"] = experiments_root
-        opt["path"]["models"] = osp.join(experiments_root, "models")
-        opt["path"]["training_state"] = osp.join(experiments_root, "training_state")
-        opt["path"]["log"] = experiments_root
-        opt["path"]["val_images"] = osp.join(experiments_root, "val_images")
+    # pretrain parse
+    for _, path_name in opt["pretraining_settings"].items():
+        path_name["pretrained_model_path"] = os.path.abspath(
+            path_name["pretrained_model_path"]
+        )
 
-        # change some options for debug mode
-        if "debug" in opt["name"]:
-            opt["train"]["val_freq"] = 8
-            opt["logger"]["print_freq"] = 1
-            opt["logger"]["save_checkpoint_freq"] = 8
-    else:  # test
-        results_root = osp.join(opt["path"]["root"], "results", opt["name"])
-        opt["path"]["results_root"] = results_root
-        opt["path"]["log"] = results_root
-
-    # network
-    if opt["distortion"] == "sr":
-        opt["network_G"]["scale"] = scale
+    # resume state
+    if opt["epoch_settings"]["resume_state_batch"] is None:
+        opt["epoch_settings"]["resume_state_batch"] = -1
+    if opt["epoch_settings"]["resume_state_epoch"] is None:
+        opt["epoch_settings"]["resume_state_epoch"] = 0
     return opt
 
 

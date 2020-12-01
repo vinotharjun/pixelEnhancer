@@ -1,6 +1,6 @@
 #### general settings
-name: "train_big_model"
-model: esrgan
+name: "train_small_model"
+model: rfdn 
 scale: 2
 
 
@@ -38,7 +38,7 @@ datasets:
 #### network structures
 structure:
   network_G:
-    which_model_G: RRDBNet
+    which_model_G: RFDN
     in_nc: 3
     out_nc: 3
     nf: 64
@@ -80,6 +80,5 @@ train_settings:
   pixel_criterion: l1 #l1 | l2
   pixel_weight: !!float 1e-2  # 1 if train type is psnr
   feature_criterion: l1
-  feature_loss_type: WassFeatureLoss  ## WassFeatureLoss | FeatureLoss
   tv_loss_weight: !!float 1e-5
   gan_weight: !!float 5e-3
