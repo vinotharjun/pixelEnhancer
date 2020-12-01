@@ -2,6 +2,7 @@ from enhancer import *
 from enhancer.losses import WassFeatureLoss, FeatureLoss
 from enhancer.utils import *
 from enhancer.inference import *
+from fastprogress.fastprogress import master_bar, progress_bar
 
 
 class GANTrainer:
@@ -32,10 +33,10 @@ class GANTrainer:
                 raise Exception("need checkpoint file path to load")
             self.load_checkpoint()
         self.optimizer_G = torch.optim.Adam(
-            self.generator.parameters(), lr=1e-4, betas=(0.9, 0.999)
+            self.generator.parameters(), lr=1e-4, betas=(0, 0.99), weight_decay=1e-3
         )
         self.optimizer_D = torch.optim.Adam(
-            self.discriminator.parameters(), lr=1e-4, betas=(0, 0)
+            self.discriminator.parameters(), lr=1e-4, betas=(0, 0.99), weight_decay=1e-3
         )
 
     def save_checkpoint(
@@ -50,10 +51,11 @@ class GANTrainer:
         path = self.save_checkpoint_path + "/{}.pt".format(checkpoint_file_name)
         torch.save(state, path)
         if is_best:
-            best_path = self.save_checkpoint + "/{}.pt".format(best_file_name)
+            best_path = self.save_checkpoint_path + "/{}.pt".format(best_file_name)
             shutil.copyfile(path, best_path)
 
     def load_checkpoint(self):
+        print("loading checkpoint from ", self.load_checkpoint_path)
         checkpoint = torch.load(self.load_checkpoint_path)
         if "ssim" in checkpoint:
             self.top_ssim = checkpoint["ssim"]
@@ -61,16 +63,18 @@ class GANTrainer:
         self.discriminator.load_state_dict(checkpoint["discriminator_state_dict"])
 
     def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=True):
-        for epoch in range(start, end):
+        mb = master_bar(range(start, end))
+        for epoch in mb:
+            mb.child_comment = "epoch {}".format(epoch)
             if epoch == start:
                 b = b
             else:
                 b = 0
-            self.train(epoch=epoch, b=b, eb=eb)
+            self.train(epoch=epoch, b=b, eb=eb, parent=mb)
             if isValidate == True:
-                self.validate(epoch)
+                self.validate(epoch, parent=mb)
 
-    def validate(self, epoch):
+    def validate(self, epoch, parent):
         with torch.no_grad():
             self.generator.eval()
             ss = AverageMeter()
@@ -81,19 +85,24 @@ class GANTrainer:
                 ssim_value = ssim(predicted, hr_imgs)
                 psnr_value = psnr(predicted, hr_imgs)
                 ss.update(ssim_value.detach().item(), lr_imgs.size(0))
-                ps.update(psnr_value.detach().item(), lr_imgs.size(0))
-                print(
-                    "Validating Image ", 1, "psnr :", psnr_value, " ssim :", ssim_value
+                ps.update(psnr_value, lr_imgs.size(0))
+                parent.write(
+                    "Validating Image "
+                    + str(i)
+                    + " psnr :"
+                    + str(psnr_value)
+                    + " ssim :"
+                    + str(ssim_value),
                 )
-            print("Validation Completed \n")
-            print("PSNR :", ps.avg, "\n")
-            print("SSIM :", ss.avg, "\n")
+            parent.write("Validation Completed \n")
+            parent.write("PSNR :" + str(ps.avg) + "\n")
+            parent.write("SSIM :" + str(ss.avg) + "\n")
             if ss.avg > self.top_ssim:
                 self.top_ssim = ss.avg
                 isBest = True
-                print("Saving best")
+                parent.write("Saving best")
             else:
-                print("saving checkpoint")
+                parent.write("saving checkpoint")
                 isBest = False
             state = {"epoch": str(epoch), "psnr": str(ps.avg), "ssim": str(ss.avg)}
             self.save_checkpoint(state, is_best=isBest)
@@ -116,7 +125,7 @@ class GANTrainer:
         result = preds(img_upscale)
         return result
 
-    def train(self, epoch, b=0, eb=-1):
+    def train(self, epoch, parent, b=0, eb=-1):
 
         self.generator.train()
         self.discriminator.train()  # training mode enables batch normalization
@@ -128,9 +137,10 @@ class GANTrainer:
         global_losses_c = AverageMeter()  # content loss
         global_losses_a = AverageMeter()  # adversarial loss in the generator
         global_losses_d = AverageMeter()  # adversarial loss in the discriminator
-        for i, imgs in enumerate(self.train_loader):
+        pb = progress_bar(self.train_loader, parent=parent)
+        for i, imgs in enumerate(pb):
             if i <= b and epoch == eb:
-                print("skipping", i)
+                parent.write("skipping " + str(i))
                 continue
             lr_imgs = imgs["lr"].to(device)
             hr_imgs = imgs["hr"].to(device)
@@ -185,8 +195,8 @@ class GANTrainer:
                     state = {"epoch": str(epoch), "batch": str(i)}
                     self.save_checkpoint(state)
                     self.generator.eval()
-                    print(
-                        "Epoch:{} [{}/{}] content loss :{} advloss:{} discLoss:{}".format(
+                    parent.write(
+                        "Epoch:{} [{}/{}]  content loss :{}   advloss:{}  discLoss:{}".format(
                             epoch,
                             i,
                             len(self.train_loader),
@@ -201,8 +211,8 @@ class GANTrainer:
                     self.generator.train()
 
             del lr_imgs, hr_imgs, generated, score_real, score_fake
-        print(
-            "Epoch:{} ends, Avg content loss :{} Avg advloss:{} Avg discLoss:{}".format(
+        parent.write(
+            "Epoch:{} ends,  Avg content loss :{}  Avg advloss:{}  Avg discLoss:{}".format(
                 epoch,
                 global_losses_c.avg,
                 global_losses_a.avg,
@@ -236,7 +246,7 @@ class SimpleTrainer:
                 raise Exception("need checkpoint file path to load")
             self.load_checkpoint()
         self.optimizer_G = torch.optim.Adam(
-            self.generator.parameters(), lr=2e-4, betas=(0.9, 0.999)
+            self.generator.parameters(), lr=2e-4, betas=(0.9, 0.999), weight_decay=1e-3
         )
 
     def save_checkpoint(
@@ -260,34 +270,37 @@ class SimpleTrainer:
         self.generator.load_state_dict(checkpoint["generator_state_dict"])
 
     def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=False):
-        for epoch in range(start, end):
+        mb = master_bar(range(start, end))
+        for epoch in mb:
             if epoch == start:
                 b = b
             else:
                 b = 0
-            self.train(epoch=epoch, b=b, eb=eb)
+            self.train(epoch=epoch, b=b, eb=eb, parent=mb)
             if isValidate == True:
-                self.validate(epoch)
+                self.validate(epoch, parent=mb)
 
-    def validate(self, epoch):
+    def validate(self, epoch, parent):
         with torch.no_grad():
             self.generator.eval()
-            ss = AverageMeter()
             ps = AverageMeter()
-            for i, imgs in enumerate(self.val_loader):
+            pb = progress_bar(self.val_loader, parent=parent)
+            for i, imgs in enumerate(pb):
                 lr_imgs, hr_imgs = imgs["lr"].to(device), imgs["hr"].to(device)
                 predicted = self.generator(lr_imgs)
                 psnr_value = psnr(predicted, hr_imgs)
-                ps.update(psnr_value.detach().item(), lr_imgs.size(0))
-                print("Validating Image ", 1, "psnr :", psnr_value)
-            print("Validation Completed \n")
-            print("PSNR :", ps.avg, "\n")
+                ps.update(psnr_value.item(), lr_imgs.size(0))
+                parent.write(
+                    "Validating Image " + str(i) + " psnr : " + str(psnr_value)
+                )
+            parent.write("Validation Completed \n")
+            parent.write("PSNR : " + str(ps.avg) + "\n")
             if ps.avg > self.top_psnr:
                 self.top_psnr = ps.avg
                 isBest = True
-                print("Saving best")
+                parent.write("Saving best")
             else:
-                print("saving checkpoint")
+                parent.write("saving checkpoint")
                 isBest = False
             state = {"epoch": str(epoch), "psnr": str(ps.avg)}
             self.save_checkpoint(state, is_best=isBest)
@@ -304,23 +317,21 @@ class SimpleTrainer:
         img_patches = img_splitter.split_img_tensor(img, scale_method=None, img_pad=0)
         out = []
         self.generator.eval()
-        for j, i in enumerate(img_patches):
+        for i in img_patches:
             out.append(self.generator(i.to(device)))
         img_upscale = img_splitter.merge_img_tensor(out)
         result = preds(img_upscale)
         return result
 
-    def train(self, epoch, b=0, eb=-1):
+    def train(self, epoch, parent, b=0, eb=-1):
 
         self.generator.train()  # training mode enables batch normalization
-
         losses_c = AverageMeter()  # content loss
-
         global_loss_c = AverageMeter()
-
-        for i, imgs in enumerate(self.train_loader):
+        pb = progress_bar(self.train_loader, parent=parent)
+        for i, imgs in enumerate(pb):
             if i <= b and epoch == eb:
-                print("skipping", i)
+                parent.write("skipping" + str(i))
                 continue
             lr_imgs = imgs["lr"].to(device)
             hr_imgs = imgs["hr"].to(device)
@@ -337,7 +348,7 @@ class SimpleTrainer:
                     state = {"epoch": str(epoch), "batch": str(i)}
                     self.save_checkpoint(state)
                     self.generator.eval()
-                    print(
+                    parent.write(
                         "Epoch: {} [{}/{}] content loss :{}".format(
                             epoch,
                             i,
@@ -348,4 +359,6 @@ class SimpleTrainer:
                     losses_c.reset()
                     self.generator.train()
             del lr_imgs, hr_imgs, generated
-        print("\nEpoch: {} average content loss {}".format(epoch, global_loss.avg))
+        parent.write(
+            "\nEpoch: {} average content loss {}".format(epoch, global_loss_c.avg)
+        )

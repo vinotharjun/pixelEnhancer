@@ -1,4 +1,4 @@
-from enhancer.imports import *
+from enhancer import *
 from .loss_utils import *
 
 
@@ -18,7 +18,7 @@ class WassFeatureLoss(nn.Module):
             self.register_buffer("std", std)
 
         self.m_feat = torchvision.models.vgg16_bn(True).features.to(device).eval()
-        for k, v in self.m_feat.named_parameters():
+        for _, v in self.m_feat.named_parameters():
             v.requires_grad = False
         blocks = [
             i - 1
