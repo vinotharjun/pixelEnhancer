@@ -43,7 +43,7 @@ def get_dataloader_from_yml(yml_file_path):
     }
 
 
-def get_generator_from_yml(yml_file_path):
+def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=True):
     if yml_file_path is None:
         raise Exception("need yml file")
     opt = parse_yml(yml_file_path)
@@ -73,7 +73,13 @@ def get_generator_from_yml(yml_file_path):
             scale = 4
         model = RFDN(in_c, nf, num_modules, out_c, scale)
 
-    return model.to(device)
+    model = model.to(device)
+    if pretrain_path is not None:
+        if key is not None:
+            model.load_state_dict(torch.load(pretrain_path)[key], strict=strict)
+        else:
+            model.load_state_dict(torch.load(pretrain_path), strict=strict)
+    return model
 
 
 def get_discriminator_from_yml(yml_file_path):
