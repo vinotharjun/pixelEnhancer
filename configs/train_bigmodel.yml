@@ -1,5 +1,5 @@
 #### general settings
-name: "train_big_model"
+name: train_big_model
 model: esrgan
 scale: 2
 
@@ -10,9 +10,9 @@ datasets:
     name: train
     mode: LQGT
     noise_needed: true
-    noise_data: ../datasets/df2k/Corrupted_noise/
-    dataroot_GT: ../datasets/df2k/HR
-    dataroot_LQ: ../datasets/df2k/LR
+    noise_data: ../dataset/df2k/Corrupted_noise/
+    dataroot_GT: ../dataset/df2k/HR
+    dataroot_LQ: ../dataset/df2k/LR
     use_shuffle: true
     n_workers: 4  # per GPU
     batch_size: 16
@@ -25,8 +25,8 @@ datasets:
     mode: LQGT
     noise_needed: false
     noise_data: ~
-    dataroot_GT: ../datasets/df2k/HR
-    dataroot_LQ: ../datasets/df2k/LR
+    dataroot_GT: ../dataset/df2k/HR
+    dataroot_LQ: ../dataset/df2k/LR
     use_shuffle: false
     n_workers: 4  # per GPU
     batch_size: 1

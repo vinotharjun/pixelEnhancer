@@ -1,13 +1,11 @@
 import torch
-import torch.utils.data
 
 
-def create_dataloader(dataset, dataset_opt, opt=None, sampler=None):
-    phase = dataset_opt["phase"]
+def create_dataloader(
+    dataset, phase, num_workers=4, batch_size=1, is_shuffle=True, sampler=None
+):
     if phase == "train":
-        num_workers = dataset_opt["n_workers"]
-        batch_size = dataset_opt["batch_size"]
-        shuffle = True
+        shuffle = is_shuffle
         return torch.utils.data.DataLoader(
             dataset,
             batch_size=batch_size,
@@ -19,22 +17,20 @@ def create_dataloader(dataset, dataset_opt, opt=None, sampler=None):
         )
     else:
         return torch.utils.data.DataLoader(
-            dataset, batch_size=1, shuffle=False, num_workers=1, pin_memory=True
+            dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=1,
+            pin_memory=True,
         )
 
 
-def create_dataset(opt):
-    if mode == opt["mode"]:
+def create_dataset(mode, lq_path, gt_path, noiseds_path, noise_needed, gtsize, scale):
+    if mode == "LQGT":
         from .lqgt import LQGT as D
     else:
         raise NotImplementedError("Dataset [{:s}] is not recognized.".format(mode))
-    lq_path = opt["lr_path"]
-    gt_path = opt["hr_path"]
-    noiseds_path = opt["noise_path"]
-    noise_needed = opt["noise_enable"]
     if noise_needed is False:
         noiseds_path = None
-    gtsize = opt["crop_size"]
-    scale = opt["scale"]
-    dataset = D(lq_path, gt_path, noiseds_path, gtsize, scale)
-    return dataset
+    ds = D(lq_path, gt_path, noiseds_path, gtsize, scale)
+    return ds

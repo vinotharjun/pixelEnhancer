@@ -80,7 +80,6 @@ class LQGT(data.Dataset):
             np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))
         ).float()
         if self.noises is not None:
-            print(self.noises)
             noise_rnd = np.random.randint(0, len(self.noises))
             noise = self.noises[noise_rnd]
             img_LQ = torch.clamp(img_LQ + noise, 0, 1)

@@ -1,5 +1,5 @@
 #### general settings
-name: "train_small_model"
+name: train_small_model
 model: rfdn 
 scale: 2
 
@@ -10,9 +10,9 @@ datasets:
     name: train
     mode: LQGT
     noise_needed: true
-    noise_data: ../datasets/df2k/Corrupted_noise/
-    dataroot_GT: ../datasets/df2k/HR
-    dataroot_LQ: ../datasets/df2k/LR
+    noise_data: ../dataset/df2k/Corrupted_noise/
+    dataroot_GT: ../dataset/df2k/HR
+    dataroot_LQ: ../dataset/df2k/LR
     use_shuffle: true
     n_workers: 4  # per GPU
     batch_size: 16
@@ -25,8 +25,8 @@ datasets:
     mode: LQGT
     noise_needed: false
     noise_data: ~
-    dataroot_GT: ../datasets/df2k/HR
-    dataroot_LQ: ../datasets/df2k/LR
+    dataroot_GT: ../dataset/df2k/HR
+    dataroot_LQ: ../dataset/df2k/LR
     use_shuffle: false
     n_workers: 4  # per GPU
     batch_size: 1
@@ -34,15 +34,15 @@ datasets:
     use_flip: true
     use_rot: true
     color: RGB
-
+#in_nc=3, nf=50, num_modules=4, out_nc=3, upscale=4
 #### network structures
 structure:
   network_G:
     which_model_G: RFDN
     in_nc: 3
     out_nc: 3
-    nf: 64
-    nb: 23
+    nf: 50
+    num_modules: 4
   network_D:
     which_model_D: Discriminator
     in_nc: 3

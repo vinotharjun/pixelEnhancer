@@ -10,7 +10,9 @@ class noiseDataset(data.Dataset):
         self.normalize = normalize
         if self.path[-1] != "/":
             self.path = self.path + "/"
-        self.noise_imgs = sorted(glob.glob(self.path + "*.png"))
+        self.noise_imgs_png = sorted(glob.glob(self.path + "*.png"))
+        self.noise_imgs_jpg = sorted(glob.glob(self.path + "*.jpg"))
+        self.noise_imgs = sum([self.noise_imgs_png, self.noise_imgs_jpg], [])
         self.pre_process = transforms.Compose(
             [transforms.RandomCrop(size), transforms.ToTensor()]
         )
