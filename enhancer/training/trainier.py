@@ -125,6 +125,9 @@ class GANTrainer:
         losses_a = AverageMeter()  # adversarial loss in the generator
         losses_d = AverageMeter()  # adversarial loss in the discriminator
 
+        global_losses_c = AverageMeter()  # content loss
+        global_losses_a = AverageMeter()  # adversarial loss in the generator
+        global_losses_d = AverageMeter()  # adversarial loss in the discriminator
         for i, imgs in enumerate(self.train_loader):
             if i <= b and epoch == eb:
                 print("skipping", i)
@@ -153,6 +156,9 @@ class GANTrainer:
             losses_c.update(content_loss.detach().item(), lr_imgs.size(0))
             losses_a.update(adversarial_loss.detach().item(), lr_imgs.size(0))
 
+            global_losses_c.update(content_loss.detach().item(), lr_imgs.size(0))
+            global_losses_a.update(adversarial_loss.detach().item(), lr_imgs.size(0))
+
             # DISCRIMINATOR UPDATE
 
             # Discriminate super-resolution (SR) and high-resolution (HR) images
@@ -173,6 +179,7 @@ class GANTrainer:
             adversarial_loss.backward()
             self.optimizer_D.step()
             losses_d.update(adversarial_loss.detach().item(), hr_imgs.size(0))
+            global_losses_d.update(adversarial_loss.detach().item(), hr_imgs.size(0))
             if i % self.sample_interval == 0:
                 with torch.no_grad():
                     state = {"epoch": str(epoch), "batch": str(i)}
@@ -192,7 +199,16 @@ class GANTrainer:
                     losses_a.reset()
                     losses_d.reset()
                     self.generator.train()
+
             del lr_imgs, hr_imgs, generated, score_real, score_fake
+        print(
+            "Epoch:{} ends, Avg content loss :{} Avg advloss:{} Avg discLoss:{}".format(
+                epoch,
+                global_losses_c.avg,
+                global_losses_a.avg,
+                global_losses_d.avg,
+            )
+        )
 
 
 class SimpleTrainer:
@@ -300,6 +316,8 @@ class SimpleTrainer:
 
         losses_c = AverageMeter()  # content loss
 
+        global_loss_c = AverageMeter()
+
         for i, imgs in enumerate(self.train_loader):
             if i <= b and epoch == eb:
                 print("skipping", i)
@@ -313,6 +331,7 @@ class SimpleTrainer:
             content_loss.backward()
             self.optimizer_G.step()
             losses_c.update(content_loss.detach().item(), lr_imgs.size(0))
+            global_loss_c.update(content_loss.detach().item(), lr_imgs.size(0))
             if i % self.sample_interval == 0:
                 with torch.no_grad():
                     state = {"epoch": str(epoch), "batch": str(i)}
@@ -329,3 +348,4 @@ class SimpleTrainer:
                     losses_c.reset()
                     self.generator.train()
             del lr_imgs, hr_imgs, generated
+        print("\nEpoch: {} average content loss {}".format(epoch, global_loss.avg))
