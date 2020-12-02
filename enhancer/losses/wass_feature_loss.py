@@ -103,7 +103,6 @@ class WassFeatureLoss(nn.Module):
                 self._single_wass_loss(f_pred, f_targ) * w
                 for f_pred, f_targ, w in zip(in_feat, styles, self.wass_wgts)
             ]
-
         self.metrics = dict(zip(self.metric_names, self.feat_losses))
         return sum(self.feat_losses)
 

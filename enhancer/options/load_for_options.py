@@ -89,4 +89,6 @@ def get_discriminator_from_yml(yml_file_path):
 def get_trainer_from_yml(
     model_G, yml_file_path, train_loader, val_loader=None, model_D=None
 ):
-    pass
+    if yml_file_path is None:
+        raise Exception("need yml file")
+    opt = parse_yml(yml_file_path)

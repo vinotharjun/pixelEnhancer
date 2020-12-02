@@ -12,9 +12,15 @@ class GANTrainer:
         discriminator,
         train_loader,
         val_loader,
-        save_checkpoint_folder_path,
+        adversarial_loss_weight=5e-3,
+        opt_beta1=0.0,
+        opt_beta2=0.99,
+        wd=1e-3,
+        lr_G=1e-4,
+        lr_D=1e-4,
+        top_ssim=-1,
+        save_checkpoint_folder_path="./",
         load_checkpoint_file_path=None,
-        load=False,
         sample_interval=100,
     ):
         self.generator = generator
@@ -25,18 +31,28 @@ class GANTrainer:
         self.adv_loss = nn.BCEWithLogitsLoss().to(device)
         self.save_checkpoint_path = save_checkpoint_folder_path
         self.load_checkpoint_path = load_checkpoint_file_path
-        self.beta = 5e-3
-        self.top_ssim = 0.0
+        self.beta = adversarial_loss_weight
+        self.top_ssim = top_ssim
+        if not os.path.exists(self.save_checkpoint_path):
+            os.mkdir(self.save_checkpoint_path)
         self.sample_interval = sample_interval
+        load = False
+        if self.load_checkpoint_path is not None:
+            load = True
+
         if load == True:
-            if load_checkpoint_file_path is None:
-                raise Exception("need checkpoint file path to load")
             self.load_checkpoint()
         self.optimizer_G = torch.optim.Adam(
-            self.generator.parameters(), lr=1e-4, betas=(0, 0.99), weight_decay=1e-3
+            self.generator.parameters(),
+            lr=lr_G,
+            betas=(opt_beta1, opt_beta2),
+            weight_decay=wd,
         )
         self.optimizer_D = torch.optim.Adam(
-            self.discriminator.parameters(), lr=1e-4, betas=(0, 0.99), weight_decay=1e-3
+            self.discriminator.parameters(),
+            lr=lr_D,
+            betas=(opt_beta1, opt_beta2),
+            weight_decay=wd,
         )
 
     def save_checkpoint(
@@ -59,8 +75,19 @@ class GANTrainer:
         checkpoint = torch.load(self.load_checkpoint_path)
         if "ssim" in checkpoint:
             self.top_ssim = checkpoint["ssim"]
+        if "epoch" in checkpoint:
+            self.epoch_start = checkpoint["epoch"]
+        if "batch" in checkpoint:
+            self.batch_start = checkpoint["batch"]
         self.generator.load_state_dict(checkpoint["generator_state_dict"])
         self.discriminator.load_state_dict(checkpoint["discriminator_state_dict"])
+        if "epoch" in checkpoint:
+            self.epoch_start = checkpoint["epoch"]
+        if "batch" in checkpoint:
+            self.batch_start = checkpoint["batch"]
+        print(
+            f"Info :check point details are \n epoch : {self.epoch_start} and batch : {self.batch_start} "
+        )
 
     def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=True):
         mb = master_bar(range(start, end))
@@ -104,7 +131,12 @@ class GANTrainer:
             else:
                 parent.write("saving checkpoint")
                 isBest = False
-            state = {"epoch": str(epoch), "psnr": str(ps.avg), "ssim": str(ss.avg)}
+            state = {
+                "epoch": str(epoch),
+                "psnr": str(ps.avg),
+                "ssim": str(ss.avg),
+                "batch": str(-1),
+            }
             self.save_checkpoint(state, is_best=isBest)
 
     def predict_single(self, img):
@@ -227,10 +259,14 @@ class SimpleTrainer:
         generator,
         train_loader,
         val_loader,
-        save_checkpoint_folder_path,
+        opt_beta1=0.0,
+        opt_beta2=0.99,
+        wd=1e-3,
+        lr=1e-4,
+        top_psnr=-1,
+        save_checkpoint_folder_path="./",
         criterion=nn.L1Loss(),
         load_checkpoint_file_path=None,
-        load=False,
         sample_interval=100,
     ):
         self.generator = generator
@@ -239,14 +275,18 @@ class SimpleTrainer:
         self.val_loader = val_loader
         self.save_checkpoint_path = save_checkpoint_folder_path
         self.load_checkpoint_path = load_checkpoint_file_path
-        self.top_psnr = -1.0
+        self.top_psnr = top_psnr
         self.sample_interval = sample_interval
+        load = False
+        if load_checkpoint_file_path is not None:
+            load = True
         if load == True:
-            if load_checkpoint_file_path is None:
-                raise Exception("need checkpoint file path to load")
             self.load_checkpoint()
         self.optimizer_G = torch.optim.Adam(
-            self.generator.parameters(), lr=2e-4, betas=(0.9, 0.999), weight_decay=1e-3
+            self.generator.parameters(),
+            lr=lr,
+            betas=(opt_beta1, opt_beta2),
+            weight_decay=wd,
         )
 
     def save_checkpoint(
@@ -264,10 +304,18 @@ class SimpleTrainer:
             shutil.copyfile(path, best_path)
 
     def load_checkpoint(self):
+        print("loading checkpoint from ", self.load_checkpoint_path)
         checkpoint = torch.load(self.load_checkpoint_path)
-        if "ssim" in checkpoint:
-            self.top_ssim = checkpoint["ssim"]
+        if "psnr" in checkpoint:
+            self.top_psnr = checkpoint["psnr"]
         self.generator.load_state_dict(checkpoint["generator_state_dict"])
+        if "epoch" in checkpoint:
+            self.epoch_start = checkpoint["epoch"]
+        if "batch" in checkpoint:
+            self.batch_start = checkpoint["batch"]
+        print(
+            f"Info :check point details are \n epoch : {self.epoch_start} \n batch : {self.batch_start} "
+        )
 
     def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=False):
         mb = master_bar(range(start, end))
@@ -302,7 +350,7 @@ class SimpleTrainer:
             else:
                 parent.write("saving checkpoint")
                 isBest = False
-            state = {"epoch": str(epoch), "psnr": str(ps.avg)}
+            state = {"epoch": str(epoch), "psnr": str(ps.avg), "batch": str(-1)}
             self.save_checkpoint(state, is_best=isBest)
 
     def predict_single(self, img):
