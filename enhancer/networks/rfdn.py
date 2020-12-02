@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from .rfdn_blocks import *
+from .esrgan_blocks import *
 
 
 def make_model(args, parent=False):
@@ -22,9 +23,70 @@ class RFDN(nn.Module):
 
         self.LR_conv = conv_layer(nf, nf, kernel_size=3)
 
-        upsample_block = pixelshuffle_block
-        self.upsampler = upsample_block(nf, out_nc, upscale_factor=upscale)
-        self.scale_idx = 0
+        if upscale == 16:
+            tail_layers = OrderedDict(
+                [
+                    ("interpolate1", Interpolate()),
+                    ("up_conv1", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu1", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("interpolate2", Interpolate()),
+                    ("up_conv2", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu2", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("interpolate3", Interpolate()),
+                    ("up_conv3", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu3", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("interpolate4", Interpolate()),
+                    ("up_conv4", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu4", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("hrconv", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("hrconv_lrelu", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("conv_last", nn.Conv2d(nf, out_nc, 3, 1, 1, bias=True)),
+                ]
+            )
+        if upscale == 8:
+            tail_layers = OrderedDict(
+                [
+                    ("interpolate1", Interpolate()),
+                    ("up_conv1", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu1", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("interpolate2", Interpolate()),
+                    ("up_conv2", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu2", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("interpolate3", Interpolate()),
+                    ("up_conv3", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu3", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("hrconv", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("hrconv_lrelu", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("conv_last", nn.Conv2d(nf, out_nc, 3, 1, 1, bias=True)),
+                ]
+            )
+        if upscale == 2:
+            tail_layers = OrderedDict(
+                [
+                    ("interpolate1", Interpolate()),
+                    ("up_conv1", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu1", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("hrconv", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("hrconv_lrelu", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("conv_last", nn.Conv2d(nf, out_nc, 3, 1, 1, bias=True)),
+                ]
+            )
+        else:
+            tail_layers = OrderedDict(
+                [
+                    ("interpolate1", Interpolate()),
+                    ("up_conv1", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu1", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("interpolate2", Interpolate()),
+                    ("up_conv2", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu2", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("hrconv", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("hrconv_lrelu", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("conv_last", nn.Conv2d(nf, out_nc, 3, 1, 1, bias=True)),
+                ]
+            )
+
+        self.upsampler = nn.Sequential(tail_layers)
 
     def forward(self, input):
         out_fea = self.fea_conv(input)
@@ -39,6 +101,3 @@ class RFDN(nn.Module):
         output = self.upsampler(out_lr)
 
         return output
-
-    def set_scale(self, scale_idx):
-        self.scale_idx = scale_idx

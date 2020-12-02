@@ -13,11 +13,27 @@ def parse_yml(opt_path):
         opt = yaml.load(f, Loader=Loader)
     # dataset parse
     for phase, dataset in opt["datasets"].items():
-        dataset["dataroot_GT"] = os.path.abspath(dataset["dataroot_GT"])
-        dataset["dataroot_LQ"] = os.path.abspath(dataset["dataroot_LQ"])
+        if type(dataset["dataroot_GT"]) == type(""):
+            dataset["dataroot_GT"] = os.path.abspath(dataset["dataroot_GT"])
+        else:
+            for i in range(len(dataset["dataroot_GT"])):
+                dataset["dataroot_GT"][i] = os.path.abspath(dataset["dataroot_GT"][i])
+
+        if type(dataset["dataroot_LQ"]) == type(""):
+            dataset["dataroot_LQ"] = os.path.abspath(dataset["dataroot_LQ"])
+        else:
+            for i in range(len(dataset["dataroot_LQ"])):
+                dataset["dataroot_LQ"][i] = os.path.abspath(dataset["dataroot_LQ"][i])
+        assert len(dataset["dataroot_LQ"]) == len(dataset["dataroot_GT"])
         if phase == "train":
             if dataset["noise_needed"] is True and dataset["noise_data"] is not None:
-                dataset["noise_data"] = os.path.abspath(dataset["noise_data"])
+                if type(dataset["noise_data"]) == type(""):
+                    dataset["noise_data"] = os.path.abspath(dataset["noise_data"])
+                else:
+                    for i in range(len(dataset["noise_data"])):
+                        dataset["noise_data"][i] = os.path.abspath(
+                            dataset["noise_data"][i]
+                        )
             else:
                 dataset["noise_data"] = None
                 dataset["noise_needed"] = False

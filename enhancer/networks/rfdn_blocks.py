@@ -214,3 +214,9 @@ def pixelshuffle_block(
     )
     pixel_shuffle = nn.PixelShuffle(upscale_factor)
     return sequential(conv, pixel_shuffle)
+
+
+def interpolation_block(
+    in_channels, out_channels, upscale_factor=2, kernel_size=3, stride=1
+):
+    interpolated = nn.functional.interpolate

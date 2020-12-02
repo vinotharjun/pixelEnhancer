@@ -2,8 +2,7 @@
 name: train_big_model
 model: esrgan
 scale: 4
-type: gan
-
+type: mse
 
 #### datasets
 datasets:
@@ -77,10 +76,16 @@ train_settings:
   weight_decay_D: !!float 1e-3
   beta1_D: 0.9
   beta2_D: 0.999
-  trainer_type: gan  # gan | psnr
+  trainer_type: psnr  # gan | psnr
   pixel_criterion: l1 #l1 | l2
   pixel_weight: !!float 1e-2  # 1 if train type is psnr
   feature_criterion: l1
   feature_loss_type: WassFeatureLoss  ## WassFeatureLoss | FeatureLoss
-  tv_loss_weight: !!float 1e-5
   gan_weight: !!float 5e-3
+  top_score:  !!int -1
+  save_checkpoint_folder_path: "../checkpoints"
+  save_checkpoint_file_name: "small_checkpoint"
+  save_bestmodel_file_name: "small_best"
+
+  load_checkpoint_file_path: ~
+  sample_interval: 100

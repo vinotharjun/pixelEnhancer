@@ -4,7 +4,6 @@ model: esrgan
 scale: 4
 type: gan
 
-
 #### datasets
 datasets:
   train:
@@ -82,5 +81,11 @@ train_settings:
   pixel_weight: !!float 1e-2  # 1 if train type is psnr
   feature_criterion: l1
   feature_loss_type: WassFeatureLoss  ## WassFeatureLoss | FeatureLoss
-  tv_loss_weight: !!float 1e-5
   gan_weight: !!float 5e-3
+  top_score:  !!int -1
+  save_checkpoint_folder_path: "../checkpoints"
+  save_checkpoint_file_name: "small_checkpoint"
+  save_bestmodel_file_name: "small_best"
+
+  load_checkpoint_file_path: ~
+  sample_interval: 100

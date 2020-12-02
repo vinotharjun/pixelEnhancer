@@ -6,13 +6,18 @@ import torch.utils.data as data
 class noiseDataset(data.Dataset):
     def __init__(self, dataset_path, size=32, normalize=True):
         super(noiseDataset, self).__init__()
-        self.path = dataset_path
         self.normalize = normalize
-        if self.path[-1] != "/":
-            self.path = self.path + "/"
-        self.noise_imgs_png = sorted(glob.glob(self.path + "*.png"))
-        self.noise_imgs_jpg = sorted(glob.glob(self.path + "*.jpg"))
-        self.noise_imgs = sum([self.noise_imgs_png, self.noise_imgs_jpg], [])
+        if type(dataset_path) == type(""):
+            dataset_path = [dataset_path]
+        noise_paths = []
+        for i in dataset_path:
+            if i[-1] != "/":
+                i = i + "/"
+            png_imgs = sorted(glob.glob(i + "*.png"))
+            jpg_imgs = sorted(glob.glob(i + "*.jpg"))
+            all_imgs = sum([png_imgs, jpg_imgs], [])
+            noise_paths.append(all_imgs)
+        self.noise_imgs = sum(noise_paths, [])
         self.pre_process = transforms.Compose(
             [transforms.RandomCrop(size), transforms.ToTensor()]
         )

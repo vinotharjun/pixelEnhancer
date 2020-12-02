@@ -1,8 +1,8 @@
 #### general settings
-name: train_big_model
-model: esrgan
+name: train_small_model
+model: rfdn 
 scale: 4
-type: gan
+type : gan
 
 
 #### datasets
@@ -10,10 +10,10 @@ datasets:
   train:
     name: train
     mode: LQGT
-    noise_needed: false
-    noise_data: [../dataset/df2k/Corrupted_noise/]
-    dataroot_GT: [ ../dataset/df2k/HR]
-    dataroot_LQ: [../dataset/df2k/LR]
+    noise_needed: true
+    noise_data: ../dataset/df2k/Corrupted_noise/
+    dataroot_GT: ../dataset/df2k/HR
+    dataroot_LQ: ../dataset/df2k/LR
     use_shuffle: true
     n_workers: 4  # per GPU
     batch_size: 16
@@ -35,15 +35,15 @@ datasets:
     use_flip: true
     use_rot: true
     color: RGB
-
+#in_nc=3, nf=50, num_modules=4, out_nc=3, upscale=4
 #### network structures
 structure:
   network_G:
-    which_model_G: RRDBNet
+    which_model_G: RFDN
     in_nc: 3
     out_nc: 3
-    nf: 64
-    nb: 23
+    nf: 50
+    num_modules: 4
   network_D:
     which_model_D: Discriminator
     in_nc: 3
@@ -78,9 +78,16 @@ train_settings:
   beta1_D: 0.9
   beta2_D: 0.999
   trainer_type: gan  # gan | psnr
-  pixel_criterion: l1 #l1 | l2
+  pixel_criterion: l1 #l1 | l2 
   pixel_weight: !!float 1e-2  # 1 if train type is psnr
   feature_criterion: l1
-  feature_loss_type: WassFeatureLoss  ## WassFeatureLoss | FeatureLoss
   tv_loss_weight: !!float 1e-5
   gan_weight: !!float 5e-3
+  top_score:  !!int -1
+  save_checkpoint_folder_path: "../checkpoints"
+  save_checkpoint_file_name: "small_checkpoint"
+  save_bestmodel_file_name: "small_best"
+
+  load_checkpoint_file_path: ~
+  sample_interval: 100
+

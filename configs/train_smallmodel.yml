@@ -1,7 +1,8 @@
 #### general settings
 name: train_small_model
 model: rfdn 
-scale: 2
+scale: 4
+type : gan
 
 
 #### datasets
@@ -77,8 +78,17 @@ train_settings:
   beta1_D: 0.9
   beta2_D: 0.999
   trainer_type: gan  # gan | psnr
-  pixel_criterion: l1 #l1 | l2
+  pixel_criterion: l1 #l1 | l2 
   pixel_weight: !!float 1e-2  # 1 if train type is psnr
   feature_criterion: l1
   tv_loss_weight: !!float 1e-5
   gan_weight: !!float 5e-3
+  top_ssim: !float -1
+  top_psnr: !float -1
+  save_checkpoint_folder_path: "../checkpoints"
+  save_checkpoint_file_name: "small_checkpoint"
+  save_bestmodel_file_name: "small_best"
+
+  load_checkpoint_folder_path: ~
+  sample_interval: 100
+

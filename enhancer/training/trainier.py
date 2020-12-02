@@ -20,11 +20,13 @@ class GANTrainer:
         lr_D=1e-4,
         top_ssim=-1,
         save_checkpoint_folder_path="./",
+        save_checkpoint_file_name="checkpoint",
+        save_best_file_name="best",
         load_checkpoint_file_path=None,
         sample_interval=100,
     ):
-        self.generator = generator
-        self.discriminator = discriminator
+        self.generator = generator.to(device)
+        self.discriminator = discriminator.to(device)
         self.train_loader = train_loader
         self.feat_loss = WassFeatureLoss().to(device)
         self.val_loader = val_loader
@@ -33,6 +35,8 @@ class GANTrainer:
         self.load_checkpoint_path = load_checkpoint_file_path
         self.beta = adversarial_loss_weight
         self.top_ssim = top_ssim
+        self.save_checkpoint_file_name = save_checkpoint_file_name
+        self.save_best_file_name = save_best_file_name
         if not os.path.exists(self.save_checkpoint_path):
             os.mkdir(self.save_checkpoint_path)
         self.sample_interval = sample_interval
@@ -137,7 +141,12 @@ class GANTrainer:
                 "ssim": str(ss.avg),
                 "batch": str(-1),
             }
-            self.save_checkpoint(state, is_best=isBest)
+            self.save_checkpoint(
+                state,
+                is_best=isBest,
+                checkpoint_file_name=self.save_checkpoint_file_name,
+                best_file_name=self.save_best_file_name,
+            )
 
     def predict_single(self, img):
         def preds(arr, denormalize=False):
@@ -225,7 +234,12 @@ class GANTrainer:
             if i % self.sample_interval == 0:
                 with torch.no_grad():
                     state = {"epoch": str(epoch), "batch": str(i)}
-                    self.save_checkpoint(state)
+                    self.save_checkpoint(
+                        state,
+                        is_best=False,
+                        checkpoint_file_name=self.save_checkpoint_file_name,
+                        best_file_name=self.save_best_file_name,
+                    )
                     self.generator.eval()
                     parent.write(
                         "Epoch:{} [{}/{}]  content loss :{}   advloss:{}  discLoss:{}".format(
@@ -265,17 +279,21 @@ class SimpleTrainer:
         lr=1e-4,
         top_psnr=-1,
         save_checkpoint_folder_path="./",
+        save_checkpoint_file_name="checkpoint",
+        save_best_file_name="best",
         criterion=nn.L1Loss(),
         load_checkpoint_file_path=None,
         sample_interval=100,
     ):
-        self.generator = generator
+        self.generator = generator.to(device)
         self.train_loader = train_loader
-        self.feat_loss = criterion
+        self.feat_loss = criterion.to(device)
         self.val_loader = val_loader
         self.save_checkpoint_path = save_checkpoint_folder_path
         self.load_checkpoint_path = load_checkpoint_file_path
         self.top_psnr = top_psnr
+        self.save_checkpoint_file_name = save_checkpoint_file_name
+        self.save_best_file_name = save_best_file_name
         self.sample_interval = sample_interval
         load = False
         if load_checkpoint_file_path is not None:
@@ -337,7 +355,7 @@ class SimpleTrainer:
                 lr_imgs, hr_imgs = imgs["lr"].to(device), imgs["hr"].to(device)
                 predicted = self.generator(lr_imgs)
                 psnr_value = psnr(predicted, hr_imgs)
-                ps.update(psnr_value.item(), lr_imgs.size(0))
+                ps.update(psnr_value, lr_imgs.size(0))
                 parent.write(
                     "Validating Image " + str(i) + " psnr : " + str(psnr_value)
                 )
@@ -351,7 +369,12 @@ class SimpleTrainer:
                 parent.write("saving checkpoint")
                 isBest = False
             state = {"epoch": str(epoch), "psnr": str(ps.avg), "batch": str(-1)}
-            self.save_checkpoint(state, is_best=isBest)
+            self.save_checkpoint(
+                state,
+                is_best=isBest,
+                checkpoint_file_name=self.save_checkpoint_file_name,
+                best_file_name=self.save_best_file_name,
+            )
 
     def predict_single(self, img):
         def preds(arr, denormalize=False):
@@ -394,7 +417,12 @@ class SimpleTrainer:
             if i % self.sample_interval == 0:
                 with torch.no_grad():
                     state = {"epoch": str(epoch), "batch": str(i)}
-                    self.save_checkpoint(state)
+                    self.save_checkpoint(
+                        state,
+                        is_best=False,
+                        checkpoint_file_name=self.save_checkpoint_file_name,
+                        best_file_name=self.save_best_file_name,
+                    )
                     self.generator.eval()
                     parent.write(
                         "Epoch: {} [{}/{}] content loss :{}".format(

@@ -20,8 +20,18 @@ class LQGT(data.Dataset):
         self.scale = scale
         self.LQ_env, self.GT_env = None, None  # environment for lmdb
         self.data_type = "img"
-        self.paths_GT, self.sizes_GT = get_image_paths(self.data_type, gt_path)
-        self.paths_LQ, self.sizes_LQ = get_image_paths(self.data_type, lq_path)
+        if type(lq_path) == type(""):
+            lq_path = [lq_path]
+        if type(gt_path) == type(""):
+            gt_path = [gt_path]
+        lqpaths = []
+        for i in lq_path:
+            lqpaths.append(get_image_paths(self.data_type, i)[0])
+        gtpaths = []
+        for i in gt_path:
+            gtpaths.append(get_image_paths(self.data_type, i)[0])
+        self.paths_GT = sum(gtpaths, [])
+        self.paths_LQ = sum(lqpaths, [])
         self.random_scale_list = [1]
         self.noiseds_path = noiseds_path
         if self.noiseds_path is not None:
