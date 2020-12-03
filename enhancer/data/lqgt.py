@@ -89,6 +89,24 @@ class LQGT(data.Dataset):
         img_LQ = torch.from_numpy(
             np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))
         ).float()
+        # if doesnt matches
+        lr_h, lr_w = img_LQ.size()[-1], img_LQ.size()[-2]
+        gt_h, gt_w = img_GT.size()[-1], img_GT.size()[-2]
+
+        if gt_h != lr_h * self.scale or gt_w != lr_w * self.scale:
+            img_GT = torch.nn.functional.interpolate(
+                img_GT.unsqueeze(0), size=(self.GT_SIZE, self.GT_SIZE), mode="bicubic"
+            ).unsqueeze(0)
+            img_LQ = torch.nn.functional.interpolate(
+                img_LQ.unsqueeze(0),
+                size=(self.GT_SIZE // self.scale, self.GT_SIZE // self.scale),
+                mode="bicubic",
+            ).unsqueeze(0)
+            # img_GT = torch.nn.functional.interpolate(
+            #     img_GT.unsqueeze(0),
+            #     size=(lr_w * self.scale, lr_h * self.scale),
+            #     mode="bicubic",
+            # ).squeeze(0)
         if self.noises is not None:
             noise_rnd = np.random.randint(0, len(self.noises))
             noise = self.noises[noise_rnd]
