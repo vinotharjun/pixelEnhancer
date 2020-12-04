@@ -80,18 +80,23 @@ def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=T
     
     if pretrain_path is not None:
         if key is not None:
-            model.load_state_dict(torch.load(pretrain_path)[key], strict=strict)
+            model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device)[key], strict=strict)
+            print(f"generator is loaded from {pretrain_path}")
         else:
-            model.load_state_dict(torch.load(pretrain_path), strict=strict)
+            model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device), strict=strict)
+            print(f"generator is loaded from {pretrain_path}")
     else:
         if opt["pretraining_settings"]["network_G"]["want_load"] is True:
             pretrain_path = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
             strict = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
             key = opt["pretraining_settings"]["network_G"]["key"]
             if key is not None:
-                model.load_state_dict(torch.load(pretrain_path)[key], strict=strict)
+                model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device)[key], strict=strict)
+                print(f"generator is loaded from {pretrain_path}")
             else:
-                model.load_state_dict(torch.load(pretrain_path), strict=strict)
+                model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device), strict=strict)
+                print(f"generator is loaded from {pretrain_path}")
+            
                 
     return model
 
