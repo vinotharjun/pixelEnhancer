@@ -56,10 +56,14 @@ pretraining_settings:
     type: psnr # psnr | gan
     pretrained_model_path: ../pretrained_model/RRDB_PSNR_x4.pth
     strict_load: true
+    key: "generator_state_dict"
   network_D: 
     want_load: false
     pretrained_model_path: ../pretrained_model/RRDB_PSNR_x4.pth
+    pretrain_from_external: ~
+    external_strict: false
     strict_load: true
+    key: "discriminator_state_dict"
   
 #epoch settings
 epoch_settings:

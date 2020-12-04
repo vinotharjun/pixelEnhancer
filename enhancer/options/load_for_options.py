@@ -76,11 +76,23 @@ def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=T
         model = RFDN(in_c, nf, num_modules, out_c, scale)
     
     model = model.to(device)
+
+    
     if pretrain_path is not None:
         if key is not None:
             model.load_state_dict(torch.load(pretrain_path)[key], strict=strict)
         else:
             model.load_state_dict(torch.load(pretrain_path), strict=strict)
+    else:
+        if opt["pretraining_settings"]["network_G"]["want_load"] is True:
+            pretrain_path = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
+            strict = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
+            key = opt["pretraining_settings"]["network_G"]["pretrained_key"]
+            if key is not None:
+                model.load_state_dict(torch.load(pretrain_path)[key], strict=strict)
+            else:
+                model.load_state_dict(torch.load(pretrain_path), strict=strict)
+                
     return model
 
 
