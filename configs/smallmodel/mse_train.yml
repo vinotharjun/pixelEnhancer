@@ -54,7 +54,7 @@ pretraining_settings:
   network_G: 
     want_load: True
     type: psnr # psnr | gan
-    pretrained_model_path: ../checkpoints/small_checkpoint_mse_noise.pt
+    pretrained_model_path:  "../checkpoints/small_checkpoint_mse_noise.pt"
     strict_load: true
   network_D: 
     want_load: false

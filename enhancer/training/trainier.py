@@ -22,7 +22,8 @@ class GANTrainer:
         save_checkpoint_folder_path="./",
         save_checkpoint_file_name="checkpoint",
         save_best_file_name="best",
-        load_checkpoint_file_path=None,
+        load_checkpoint_file_path_generator=None,
+        load_checkpoint_file_path_critic = None
         sample_interval=100,
     ):
         self.generator = generator.to(device)
@@ -32,7 +33,8 @@ class GANTrainer:
         self.val_loader = val_loader
         self.adv_loss = nn.BCEWithLogitsLoss().to(device)
         self.save_checkpoint_path = save_checkpoint_folder_path
-        self.load_checkpoint_path = load_checkpoint_file_path
+        self.load_checkpoint_path_generator = load_checkpoint_file_path_generator
+        self.load_checkpoint_path_critic = load_checkpoint_file_path_critic
         self.beta = adversarial_loss_weight
         self.top_ssim = top_ssim
         self.save_checkpoint_file_name = save_checkpoint_file_name
@@ -40,12 +42,13 @@ class GANTrainer:
         if not os.path.exists(self.save_checkpoint_path):
             os.mkdir(self.save_checkpoint_path)
         self.sample_interval = sample_interval
-        load = False
-        if self.load_checkpoint_path is not None:
-            load = True
-
-        if load == True:
-            self.load_checkpoint()
+        load_generator = False
+        load_critic = False
+        if self.load_checkpoint_path_generator is not None:
+            load_generator = True
+        if self.load_checkpoint_path_critic is not None:
+            load_critic = True
+        self.load_checkpoint(load_generator,load_critic)
         self.optimizer_G = torch.optim.Adam(
             self.generator.parameters(),
             lr=lr_G,
@@ -74,24 +77,26 @@ class GANTrainer:
             best_path = self.save_checkpoint_path + "/{}.pt".format(best_file_name)
             shutil.copyfile(path, best_path)
 
-    def load_checkpoint(self):
-        print("loading checkpoint from ", self.load_checkpoint_path)
-        checkpoint = torch.load(self.load_checkpoint_path)
-        if "ssim" in checkpoint:
-            self.top_ssim = checkpoint["ssim"]
-        if "epoch" in checkpoint:
-            self.epoch_start = checkpoint["epoch"]
-        if "batch" in checkpoint:
-            self.batch_start = checkpoint["batch"]
-        self.generator.load_state_dict(checkpoint["generator_state_dict"])
-        self.discriminator.load_state_dict(checkpoint["discriminator_state_dict"])
-        if "epoch" in checkpoint:
-            self.epoch_start = checkpoint["epoch"]
-        if "batch" in checkpoint:
-            self.batch_start = checkpoint["batch"]
-        print(
-            f"Info :check point details are \n epoch : {self.epoch_start} and batch : {self.batch_start} "
-        )
+    def load_checkpoint(self,load_generator=False,load_critic=False):
+        if load_generator==True:
+            print("loading checkpoint from ", self.load_checkpoint_path)
+            checkpoint = torch.load(self.load_checkpoint_path)
+            if "ssim" in checkpoint:
+                self.top_ssim = checkpoint["ssim"]
+            if "epoch" in checkpoint:
+                self.epoch_start = checkpoint["epoch"]
+            if "batch" in checkpoint:
+                self.batch_start = checkpoint["batch"]
+            self.generator.load_state_dict(checkpoint["generator_state_dict"])
+            if load_critic == True
+                self.discriminator.load_state_dict(checkpoint["discriminator_state_dict"])
+            if "epoch" in checkpoint:
+                self.epoch_start = checkpoint["epoch"]
+            if "batch" in checkpoint:
+                self.batch_start = checkpoint["batch"]
+            print(
+                f"Info :check point details are \n epoch : {self.epoch_start} and batch : {self.batch_start} "
+            )
 
     def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=True):
         mb = master_bar(range(start, end))

@@ -74,7 +74,7 @@ def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=T
         else:
             scale = 4
         model = RFDN(in_c, nf, num_modules, out_c, scale)
-
+    
     model = model.to(device)
     if pretrain_path is not None:
         if key is not None:
@@ -114,9 +114,16 @@ def get_trainer_from_yml(
         ]
         save_checkpoint_file_name = opt["train_settings"]["save_checkpoint_file_name"]
         save_bestmodel_file_name = opt["train_settings"]["save_bestmodel_file_name"]
-
-        load_checkpoint_file_path = opt["train_settings"]["load_checkpoint_file_path"]
-
+        if opt["pretraining_settings"]["network_G"]["want_load"] == True:
+            load_checkpoint_file_path_G = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
+        else:
+            load_checkpoint_file_path_G = None
+        if opt["pretraining_settings"]["network_D"]["want_load"] == True:
+            load_checkpoint_file_path_D = opt["pretraining_settings"]["network_D"]["pretrained_model_path"]
+        else:
+            load_checkpoint_file_path_D = None
+            
+#         load_checkpoint_file_path = opt["train_settings"]["load_checkpoint_file_path"]
         sample_interval = opt["train_settings"]["sample_interval"]
         trainer = GANTrainer(
             generator=model_G,
@@ -133,7 +140,8 @@ def get_trainer_from_yml(
             save_checkpoint_folder_path=save_checkpoint_folder_path,
             save_checkpoint_file_name=save_checkpoint_file_name,
             save_best_file_name=save_bestmodel_file_name,
-            load_checkpoint_file_path=load_checkpoint_file_path,
+            load_checkpoint_file_path_generator =load_checkpoint_file_path_G,
+            load_checkpoint_file_path_critic = load_checkpoint_file_path_D
             sample_interval=sample_interval,
         )
         return trainer
@@ -158,9 +166,10 @@ def get_trainer_from_yml(
         ]
         save_checkpoint_file_name = opt["train_settings"]["save_checkpoint_file_name"]
         save_bestmodel_file_name = opt["train_settings"]["save_bestmodel_file_name"]
-
-        load_checkpoint_file_path = opt["train_settings"]["load_checkpoint_file_path"]
-
+        if opt["pretraining_settings"]["network_G"]["want_load"] == True
+            load_checkpoint_file_path = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
+        else:
+            load_checkpoint_file_path = None
         sample_interval = opt["train_settings"]["sample_interval"]
 
         trainer = SimpleTrainer(
