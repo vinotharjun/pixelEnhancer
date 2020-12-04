@@ -5,9 +5,9 @@ from enhancer import *
 
 def show_batches(tensor, n_row=0, n_col=0, denormalize=True, figsize=(12, 12)):
     try:
-        batch_size = len(tensor)
-        # if len(tensor.size()) != 4:
-        #     raise Exception("expected 4 dimensional tensor")
+        batch_size = tensor.size()[0]
+        if len(tensor.size()) != 4:
+            raise Exception("expected 4 dimensional tensor")
         if not n_row or not n_col:
             raise Exception("expected the number of rows and columns")
         if batch_size != n_row * n_col:
@@ -71,7 +71,7 @@ def batch_versus_plot(
         input_tensor = F.interpolate(
             input_tensor, target_tensor.shape[-1], mode="bicubic"
         )
-    f, axarr = plt.subplots(input_tensor.shape[0], 2, figsize=figsize)
+    f, axarr = plt.subplots(batch_limit, 2, figsize=figsize)
     for i in range(batch_limit):
         if i == 0:
             axarr[i][0].set_title(i_text)

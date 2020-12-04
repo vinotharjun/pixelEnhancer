@@ -313,10 +313,13 @@ class SimpleTrainer:
         is_best=False,
         checkpoint_file_name="checkpoint_mse",
         best_file_name="best_mse",
+        writer=None
     ):
         state["generator_state_dict"] = self.generator.state_dict()
         path = self.save_checkpoint_path + "/{}.pt".format(checkpoint_file_name)
         torch.save(state, path)
+        if writer is not None:
+            writer.write(f"checkpoint saved at {path}")
         if is_best:
             best_path = self.save_checkpoint_path + "/{}.pt".format(best_file_name)
             shutil.copyfile(path, best_path)
@@ -422,6 +425,7 @@ class SimpleTrainer:
                         is_best=False,
                         checkpoint_file_name=self.save_checkpoint_file_name,
                         best_file_name=self.save_best_file_name,
+                        writer = parent
                     )
                     self.generator.eval()
                     parent.write(

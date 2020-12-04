@@ -95,12 +95,12 @@ class LQGT(data.Dataset):
 
         if gt_h != lr_h * self.scale or gt_w != lr_w * self.scale:
             img_GT = torch.nn.functional.interpolate(
-                img_GT.unsqueeze(0), size=(self.GT_SIZE, self.GT_SIZE), mode="bicubic"
+                img_GT.unsqueeze(0), size=(self.GT_SIZE, self.GT_SIZE), mode="bicubic",align_corners=True
             ).squeeze(0)
             img_LQ = torch.nn.functional.interpolate(
                 img_LQ.unsqueeze(0),
                 size=(self.GT_SIZE // self.scale, self.GT_SIZE // self.scale),
-                mode="bicubic",
+                mode="bicubic",align_corners=True
             ).squeeze(0)
             # img_GT = torch.nn.functional.interpolate(
             #     img_GT.unsqueeze(0),

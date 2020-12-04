@@ -201,4 +201,4 @@ def load_pipeline_from_yml(yml_file_path):
         model_D=discriminator,
     )
 
-    return loaders, generator, discriminator, trainer
+    return {"loaders":loaders, "generator":generator, "critic":discriminator, "trainer":trainer}

@@ -4,20 +4,7 @@ from enhancer.imports import *
 rgb_weights = torch.FloatTensor([65.481, 128.553, 24.966])
 imagenet_mean = torch.FloatTensor([0.485, 0.456, 0.406]).unsqueeze(1).unsqueeze(2)
 imagenet_std = torch.FloatTensor([0.229, 0.224, 0.225]).unsqueeze(1).unsqueeze(2)
-imagenet_mean_cuda = (
-    torch.FloatTensor([0.485, 0.456, 0.406])
-    .to(device)
-    .unsqueeze(0)
-    .unsqueeze(2)
-    .unsqueeze(3)
-)
-imagenet_std_cuda = (
-    torch.FloatTensor([0.229, 0.224, 0.225])
-    .to(device)
-    .unsqueeze(0)
-    .unsqueeze(2)
-    .unsqueeze(3)
-)
+
 
 ####################
 # image convert
@@ -91,6 +78,20 @@ def common_converter(img, source, target):
     #                 'y-channel'}, "Cannot convert to target format %s!" % target
 
     # Convert from source to [0, 1]
+    imagenet_mean_cuda = (
+        torch.FloatTensor([0.485, 0.456, 0.406])
+        .to(device)
+        .unsqueeze(0)
+        .unsqueeze(2)
+        .unsqueeze(3)
+        )
+    imagenet_std_cuda = (
+        torch.FloatTensor([0.229, 0.224, 0.225])
+        .to(device)
+        .unsqueeze(0)
+        .unsqueeze(2)
+        .unsqueeze(3)
+    )
     if source == "pil":
         img = transforms.ToTensor()(img)
 

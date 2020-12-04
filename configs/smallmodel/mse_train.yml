@@ -11,13 +11,13 @@ datasets:
     name: train
     mode: LQGT
     noise_needed: true
-    noise_data: ../dataset/df2k/Corrupted_noise/
-    dataroot_GT: ../dataset/df2k/HR
-    dataroot_LQ: ../dataset/df2k/LR
+    noise_data: ../../storage/data/df2k/noise/Corrupted_noise/
+    dataroot_GT: ../../storage/data/df2k/HR
+    dataroot_LQ: ../../storage/data/df2k/LR
     use_shuffle: true
     n_workers: 4  # per GPU
     batch_size: 16
-    GT_size: 128
+    GT_size: 280
     use_flip: true
     use_rot: true
     color: RGB
@@ -25,13 +25,13 @@ datasets:
     name: validation
     mode: LQGT
     noise_needed: false
-    noise_data: ~
-    dataroot_GT: ../dataset/df2k/HR
-    dataroot_LQ: ../dataset/df2k/LR
+    noise_data: ../../storage/data/df2k/Corrupted_noise/
+    dataroot_GT: ../../storage/data/df2k/HR
+    dataroot_LQ: ../../storage/data/df2k/LR
     use_shuffle: false
     n_workers: 4  # per GPU
     batch_size: 1
-    GT_size: 128
+    GT_size: 512 
     use_flip: true
     use_rot: true
     color: RGB
@@ -52,9 +52,9 @@ structure:
 #### path
 pretraining_settings:
   network_G: 
-    want_load: false
+    want_load: True
     type: psnr # psnr | gan
-    pretrained_model_path: ../pretrained_model/RRDB_PSNR_x4.pth
+    pretrained_model_path: ../checkpoints/small_checkpoint_mse_noise.pt
     strict_load: true
   network_D: 
     want_load: false
@@ -78,16 +78,16 @@ train_settings:
   beta1_D: 0.9
   beta2_D: 0.999
   trainer_type: psnr  # gan | psnr
-  pixel_criterion: l1 #l1 | l2 
+  pixel_criterion: WassFeatureLoss #l1 | l2 
   pixel_weight: !!float 1e-2  # 1 if train type is psnr
   feature_criterion: l1
   tv_loss_weight: !!float 1e-5
   gan_weight: !!float 5e-3
   top_score:  !!int -1
   save_checkpoint_folder_path: "../checkpoints"
-  save_checkpoint_file_name: "small_checkpoint"
-  save_bestmodel_file_name: "small_best"
+  save_checkpoint_file_name: "small_checkpoint_mse_noise"
+  save_bestmodel_file_name: "small_best_mse_noise"
 
-  load_checkpoint_file_path: ~
-  sample_interval: 100
+  load_checkpoint_file_path:  "../checkpoints/small_checkpoint_mse_noise.pt"
+  sample_interval: 10
 
