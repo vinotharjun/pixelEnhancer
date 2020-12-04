@@ -87,7 +87,7 @@ def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=T
         if opt["pretraining_settings"]["network_G"]["want_load"] is True:
             pretrain_path = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
             strict = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
-            key = opt["pretraining_settings"]["network_G"]["pretrained_key"]
+            key = opt["pretraining_settings"]["network_G"]["key"]
             if key is not None:
                 model.load_state_dict(torch.load(pretrain_path)[key], strict=strict)
             else:
@@ -153,7 +153,7 @@ def get_trainer_from_yml(
             save_checkpoint_file_name=save_checkpoint_file_name,
             save_best_file_name=save_bestmodel_file_name,
             load_checkpoint_file_path_generator =load_checkpoint_file_path_G,
-            load_checkpoint_file_path_critic = load_checkpoint_file_path_D
+            load_checkpoint_file_path_critic = load_checkpoint_file_path_D,
             sample_interval=sample_interval,
         )
         return trainer
@@ -178,7 +178,7 @@ def get_trainer_from_yml(
         ]
         save_checkpoint_file_name = opt["train_settings"]["save_checkpoint_file_name"]
         save_bestmodel_file_name = opt["train_settings"]["save_bestmodel_file_name"]
-        if opt["pretraining_settings"]["network_G"]["want_load"] == True
+        if opt["pretraining_settings"]["network_G"]["want_load"] == True:
             load_checkpoint_file_path = opt["pretraining_settings"]["network_G"]["pretrained_model_path"]
         else:
             load_checkpoint_file_path = None

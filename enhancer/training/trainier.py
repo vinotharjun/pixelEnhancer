@@ -23,7 +23,7 @@ class GANTrainer:
         save_checkpoint_file_name="checkpoint",
         save_best_file_name="best",
         load_checkpoint_file_path_generator=None,
-        load_checkpoint_file_path_critic = None
+        load_checkpoint_file_path_critic = None,
         sample_interval=100,
     ):
         self.generator = generator.to(device)

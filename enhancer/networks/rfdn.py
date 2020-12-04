@@ -71,6 +71,31 @@ class RFDN(nn.Module):
                     ("conv_last", nn.Conv2d(nf, out_nc, 3, 1, 1, bias=True)),
                 ]
             )
+        if upscale == 3:
+            tail_layers = OrderedDict(
+                [
+                    ("interpolate1", Interpolate(factor=3)),
+                    ("up_conv1", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu1", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("hrconv", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("hrconv_lrelu", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("conv_last", nn.Conv2d(nf, out_nc, 3, 1, 1, bias=True)),
+                ]
+            )
+        elif upscale == 6:
+            tail_layers = OrderedDict(
+                [
+                    ("interpolate1", Interpolate(factor=3)),
+                    ("up_conv1", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu1", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("interpolate2", Interpolate(factor=3)),
+                    ("up_conv2", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("lrelu2", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("hrconv", nn.Conv2d(nf, nf, 3, 1, 1, bias=True)),
+                    ("hrconv_lrelu", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                    ("conv_last", nn.Conv2d(nf, out_nc, 3, 1, 1, bias=True)),
+                ]
+            )
         else:
             tail_layers = OrderedDict(
                 [
