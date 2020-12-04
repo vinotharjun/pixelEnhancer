@@ -85,15 +85,18 @@ class GANTrainer:
                 self.top_ssim = checkpoint["ssim"]
             if "epoch" in checkpoint:
                 self.epoch_start = checkpoint["epoch"]
+            else:
+                self.epoch_start = 0
             if "batch" in checkpoint:
                 self.batch_start = checkpoint["batch"]
-            self.generator.load_state_dict(checkpoint["generator_state_dict"])
-            if load_critic == True
+            else:
+                self.batch_start = 0
+            if "generator_state_dict" in checkpoint:
+                self.generator.load_state_dict(checkpoint["generator_state_dict"])
+                print("generator loaded...")
+            if load_critic == True and "discriminator_state_dict" in checkpoint:
                 self.discriminator.load_state_dict(checkpoint["discriminator_state_dict"])
-            if "epoch" in checkpoint:
-                self.epoch_start = checkpoint["epoch"]
-            if "batch" in checkpoint:
-                self.batch_start = checkpoint["batch"]
+                print("critic loaded...")
             print(
                 f"Info :check point details are \n epoch : {self.epoch_start} and batch : {self.batch_start} "
             )
@@ -334,11 +337,16 @@ class SimpleTrainer:
         checkpoint = torch.load(self.load_checkpoint_path)
         if "psnr" in checkpoint:
             self.top_psnr = checkpoint["psnr"]
-        self.generator.load_state_dict(checkpoint["generator_state_dict"])
+        if "generator_state_dict" in checkpoint:
+            self.generator.load_state_dict(checkpoint["generator_state_dict"])
         if "epoch" in checkpoint:
             self.epoch_start = checkpoint["epoch"]
+        else:
+            self.epoch_start = 0
         if "batch" in checkpoint:
             self.batch_start = checkpoint["batch"]
+        else:
+            self.batch_start = -1
         print(
             f"Info :check point details are \n epoch : {self.epoch_start} \n batch : {self.batch_start} "
         )
