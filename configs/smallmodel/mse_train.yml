@@ -40,11 +40,11 @@ datasets:
 #### network structures
 structure:
   network_G:
-    which_model_G: imdn #rfdn #rtenet
+    which_model_G: imdn #imdn #rfdn  #rtenet
     in_nc: 3
     out_nc: 3
-    nf: 64 #64 # 12
-    num_modules: 6 #4 #3
+    nf: 64 #64 #64 # 12
+    num_modules: 6 #6 #4 #3
   network_D:
     which_model_D: Discriminator
     in_nc: 3

@@ -64,7 +64,6 @@ class PixelUnshuffle(nn.Module):
         kdownscale_factor: k
         batchSize * c * k*w * k*h -> batchSize * k*k*c * w * h
         '''
-
         return pixel_unshuffle(input, self.downscale_factor)
 
 def conv_layer(in_channels, out_channels, kernel_size, stride=1, dilation=1, groups=1):
@@ -152,6 +151,8 @@ class IMDModule_So(nn.Module):
         self.c5 = conv_layer(30, in_channels, 1)
 
     def forward(self, input, x_sobel):
+        
+        
         out_c1 = self.act(self.c1(input))
         distilled_c1, remaining_c1 = torch.split(out_c1, (self.distilled_channels, 24), dim=1)
         out_c2 = self.act(self.c2(remaining_c1))
@@ -220,7 +221,8 @@ class SESF(nn.Module):
         distilled_c1, remaining_c1 = torch.split(out_c1, (self.distilled_channels, self.remaining_channels), dim=1) # 24, 104
         out_c1 = self.c2_1(remaining_c1) # 9 out
         out_c1_1 = self.c2_2(distilled_c1)# 12
-
+        
+        
         out = torch.cat([x, out_c1, out_c1_1, x_xobel], dim=1)
         out_fused = self.act(self.c3(out))
         return out_fused
@@ -244,8 +246,8 @@ class SmallEnhancer(nn.Module):
         self.gct = GCT(num_channels=self.nf*3)
         self.shirking = conv_layer(self.nf*3, self.nf, kernel_size=1)
         upsample_block = pixelshuffle_block
-        self.upsampler1 = upsample_block(self.nf, self.nf, upscale_factor=2)
         self.upsampler = upsample_block(self.nf, self.out_nc, upscale_factor=self.upscale)
+
 
     def forward(self, input):
         '''
@@ -260,8 +262,8 @@ class SmallEnhancer(nn.Module):
         x2 = self.rb_blocks2(x1)
         out = torch.cat([input, x1, x2], dim=1)
         out = self.shirking(self.gct(out))
-        out = self.upsampler1(out)
+        out = F.interpolate(out,size=x.size()[2:])
         out = self.rb_blocks6(out, x)
         out = self.upsampler(out)
-        input = F.interpolate(x, scale_factor=self.scale, mode='bilinear', align_corners=False)
+        input = F.interpolate(x, scale_factor=self.upscale, mode='bilinear', align_corners=False)
         return input + out
