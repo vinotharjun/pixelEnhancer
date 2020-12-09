@@ -18,13 +18,13 @@ def parse_yml(opt_path):
         else:
             for i in range(len(dataset["dataroot_GT"])):
                 dataset["dataroot_GT"][i] = os.path.abspath(dataset["dataroot_GT"][i])
-
-        if type(dataset["dataroot_LQ"]) == type(""):
-            dataset["dataroot_LQ"] = os.path.abspath(dataset["dataroot_LQ"])
-        else:
-            for i in range(len(dataset["dataroot_LQ"])):
-                dataset["dataroot_LQ"][i] = os.path.abspath(dataset["dataroot_LQ"][i])
-        assert len(dataset["dataroot_LQ"]) == len(dataset["dataroot_GT"])
+        if dataset["dataroot_LQ"] is not None:
+            if type(dataset["dataroot_LQ"]) == type(""):
+                dataset["dataroot_LQ"] = os.path.abspath(dataset["dataroot_LQ"])
+            else:
+                for i in range(len(dataset["dataroot_LQ"])):
+                    dataset["dataroot_LQ"][i] = os.path.abspath(dataset["dataroot_LQ"][i])
+            
         if phase == "train":
             if dataset["noise_needed"] is True and dataset["noise_data"] is not None:
                 if type(dataset["noise_data"]) == type(""):

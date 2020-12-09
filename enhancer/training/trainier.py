@@ -303,6 +303,11 @@ class SimpleTrainer:
         self.save_checkpoint_file_name = save_checkpoint_file_name
         self.save_best_file_name = save_best_file_name
         self.sample_interval = sample_interval
+        if self.sample_interval is not None:
+            if self.sample_interval <= 0:
+                self.sample_interval = None
+            
+        self.lr = lr
         load = False
         if load_checkpoint_file_path is not None:
             load = True
@@ -332,6 +337,12 @@ class SimpleTrainer:
             best_path = self.save_checkpoint_path + "/{}.pt".format(best_file_name)
             shutil.copyfile(path, best_path)
 
+    def adjust_learning_rate(self,epoch,step_size=200,gamma=0.5):
+        factor = epoch // step_size
+        lr = self.lr * (gamma ** factor)
+        for param_group in self.optimizer_G.param_groups:
+            param_group['lr'] = lr
+
     def load_checkpoint(self):
         print("loading checkpoint from ", self.load_checkpoint_path)
         checkpoint = torch.load(self.load_checkpoint_path)
@@ -359,8 +370,20 @@ class SimpleTrainer:
             else:
                 b = 0
             self.train(epoch=epoch, b=b, eb=eb, parent=mb)
+#             self.adjust_learning_rate(epoch)
+#             mb.write('adjusting learning rate : epoch ='+str(epoch)+ ' lr = '+str(self.optimizer_G.param_groups[0]['lr']))
             if isValidate == True:
                 self.validate(epoch, parent=mb)
+            else:
+                mb.write("No validation enabled, so saving epoch checkpoint only")
+                self.save_checkpoint(
+                    state = {"epoch":str(epoch),"batch":str(-1)},
+                    is_best=False,
+                    checkpoint_file_name=self.save_checkpoint_file_name,
+                    best_file_name=self.save_best_file_name,
+                    writer=mb
+                )
+                
 
     def validate(self, epoch, parent):
         with torch.no_grad():
@@ -430,7 +453,8 @@ class SimpleTrainer:
             self.optimizer_G.step()
             losses_c.update(content_loss.detach().item(), lr_imgs.size(0))
             global_loss_c.update(content_loss.detach().item(), lr_imgs.size(0))
-            if i % self.sample_interval == 0:
+
+            if self.sample_interval != None and i % self.sample_interval == 0 and i>=self.sample_interval:
                 with torch.no_grad():
                     state = {"epoch": str(epoch), "batch": str(i)}
                     self.save_checkpoint(

@@ -1,7 +1,7 @@
 #### general settings
 name: train_small_model
-model: rfdn 
-scale: 4
+model: imdn
+scale: 2
 type : mse
 
 
@@ -10,24 +10,26 @@ datasets:
   train:
     name: train
     mode: LQGT
-    noise_needed: true
-    noise_data: ../../storage/data/df2k/noise/Corrupted_noise/
+    noise_rate_random: false
+    noise_needed: false
+    noise_data: ["../../storage/data/df2k/color_noise/","../../storage/data/df2k/jepg_noise/Corrupted_noise/" ]
     dataroot_GT: ../../storage/data/df2k/HR
-    dataroot_LQ: ../../storage/data/df2k/LR
-    use_shuffle: true
+    dataroot_LQ: ../../storage/data/df2k/LRx2
+    use_shuffle: false
     n_workers: 4  # per GPU
-    batch_size: 16
-    GT_size: 280
+    batch_size: 64
+    GT_size: 128
     use_flip: true
     use_rot: true
     color: RGB
   val:
     name: validation
     mode: LQGT
+    noise_rate_random: true
     noise_needed: false
     noise_data: ../../storage/data/df2k/Corrupted_noise/
     dataroot_GT: ../../storage/data/df2k/HR
-    dataroot_LQ: ../../storage/data/df2k/LR
+    dataroot_LQ: ../../storage/data/df2k/LRx2
     use_shuffle: false
     n_workers: 4  # per GPU
     batch_size: 1
@@ -35,15 +37,14 @@ datasets:
     use_flip: true
     use_rot: true
     color: RGB
-#in_nc=3, nf=50, num_modules=4, out_nc=3, upscale=4
 #### network structures
 structure:
   network_G:
-    which_model_G: RFDN
+    which_model_G: imdn #rfdn #rtenet
     in_nc: 3
     out_nc: 3
-    nf: 50
-    num_modules: 4
+    nf: 64 #64 # 12
+    num_modules: 6 #4 #3
   network_D:
     which_model_D: Discriminator
     in_nc: 3
@@ -52,9 +53,9 @@ structure:
 #### path
 pretraining_settings:
   network_G: 
-    want_load: True
+    want_load: true
     type: psnr # psnr | gan
-    pretrained_model_path:  "../checkpoints/small_checkpoint_mse_noise.pt"
+    pretrained_model_path:  "../checkpoints/small_checkpoint_mse_x2.pt"
     key: "generator_state_dict"
     strict_load: true
   network_D: 
@@ -71,8 +72,8 @@ epoch_settings:
 
 #### training settings: learning rate scheme, loss
 train_settings:
-  lr_G: !!float 1e-4
-  weight_decay_G: !!float 1e-3
+  lr_G: !!float 2e-4 
+  weight_decay_G: !!float 1e-5
   beta1_G: 0.9
   beta2_G: 0.999
   lr_D: !!float 1e-4
@@ -80,14 +81,14 @@ train_settings:
   beta1_D: 0.9
   beta2_D: 0.999
   trainer_type: psnr  # gan | psnr
-  pixel_criterion: WassFeatureLoss #l1 | l2 
+  pixel_criterion: l1 #l1 | l2 
   pixel_weight: !!float 1e-2  # 1 if train type is psnr
   feature_criterion: l1
   tv_loss_weight: !!float 1e-5
   gan_weight: !!float 5e-3
   top_score:  !!int -1
 
-  sample_interval: 10
+  sample_interval: ~
   save_checkpoint_folder_path: "../checkpoints"
-  save_checkpoint_file_name: "small_checkpoint_mse_noise"
-  save_bestmodel_file_name: "small_best_mse_noise"
+  save_checkpoint_file_name: "small_checkpoint_mse_x2"
+  save_bestmodel_file_name: "small_best_mse_x2"

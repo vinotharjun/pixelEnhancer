@@ -13,6 +13,7 @@ class LQGT(data.Dataset):
         noiseds_path=None,
         gtsize=128,
         scale=4,
+        noise_rate_random=False,
         normalize_noise=True,
     ):
         super().__init__()
@@ -20,18 +21,24 @@ class LQGT(data.Dataset):
         self.scale = scale
         self.LQ_env, self.GT_env = None, None  # environment for lmdb
         self.data_type = "img"
-        if type(lq_path) == type(""):
-            lq_path = [lq_path]
-        if type(gt_path) == type(""):
-            gt_path = [gt_path]
-        lqpaths = []
-        for i in lq_path:
-            lqpaths.append(get_image_paths(self.data_type, i)[0])
-        gtpaths = []
-        for i in gt_path:
-            gtpaths.append(get_image_paths(self.data_type, i)[0])
-        self.paths_GT = sum(gtpaths, [])
-        self.paths_LQ = sum(lqpaths, [])
+        self.paths_LQ = None
+        self.paths_GT = None
+        self.noise_rate_random = noise_rate_random
+        if lq_path is not None:
+            if type(lq_path) == type(""):
+                lq_path = [lq_path] 
+            lqpaths = []
+            for i in lq_path:
+                lqpaths.append(get_image_paths(self.data_type, i)[0])
+            self.paths_LQ = sum(lqpaths, [])
+        if gt_path is not None :
+            if type(gt_path) == type(""):
+                gt_path = [gt_path]
+            gtpaths = []
+            for i in gt_path:
+                gtpaths.append(get_image_paths(self.data_type, i)[0])
+            self.paths_GT = sum(gtpaths, [])
+        
         self.random_scale_list = [1]
         self.noiseds_path = noiseds_path
         if self.noiseds_path is not None:
@@ -51,11 +58,15 @@ class LQGT(data.Dataset):
         img_GT = read_img(self.GT_env, GT_path, resolution)
         img_GT = channel_convert(img_GT.shape[2], "RGB", [img_GT])[0]
         # get LQ image
-        if self.paths_LQ:
+        if self.paths_LQ and len(self.paths_LQ)>0:
             LQ_path = self.paths_LQ[index]
             resolution = None
             img_LQ = read_img(self.LQ_env, LQ_path, resolution)
-
+        else:
+            img_LQ = imresize_np(img_GT, 1 / scale, True)
+            if img_LQ.ndim == 2:
+                img_LQ = np.expand_dims(img_LQ, axis=2)
+                
             # if the image size is too small
         H, W, _ = img_GT.shape
         if H < GT_size or W < GT_size:
@@ -102,12 +113,11 @@ class LQGT(data.Dataset):
                 size=(self.GT_SIZE // self.scale, self.GT_SIZE // self.scale),
                 mode="bicubic",align_corners=True
             ).squeeze(0)
-            # img_GT = torch.nn.functional.interpolate(
-            #     img_GT.unsqueeze(0),
-            #     size=(lr_w * self.scale, lr_h * self.scale),
-            #     mode="bicubic",
-            # ).squeeze(0)
-        if self.noises is not None:
+        if self.noise_rate_random ==True:
+            noise_mode = bool(random.getrandbits(1))
+        else:
+            noise_mode = True
+        if self.noises is not None and noise_mode == True:
             noise_rnd = np.random.randint(0, len(self.noises))
             noise = self.noises[noise_rnd]
             img_LQ = torch.clamp(img_LQ + noise, 0, 1)

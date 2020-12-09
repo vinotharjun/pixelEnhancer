@@ -24,3 +24,6 @@ def save_epoch_result(epoch, model, image, dest_path=None, normalize=False):
         numpy_result = im_convert(predicted, denormalize=True)
         pil_image = Image.fromarray((numpy_result * 255).astype(np.uint8))
         pil_image.save(f"{dest_path}/{epoch}_{round(random.random()*1000000)}.png")
+
+        
+

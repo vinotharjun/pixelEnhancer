@@ -12,8 +12,8 @@ def create_dataloader(
             shuffle=shuffle,
             num_workers=num_workers,
             sampler=sampler,
-            drop_last=True,
             pin_memory=False,
+            drop_last=True
         )
     else:
         return torch.utils.data.DataLoader(
@@ -25,12 +25,12 @@ def create_dataloader(
         )
 
 
-def create_dataset(mode, lq_path, gt_path, noiseds_path, noise_needed, gtsize, scale):
+def create_dataset(mode, lq_path, gt_path, noiseds_path, noise_needed, gtsize, scale,noise_rate_random):
     if mode == "LQGT":
         from .lqgt import LQGT as D
     else:
         raise NotImplementedError("Dataset [{:s}] is not recognized.".format(mode))
     if noise_needed is False:
         noiseds_path = None
-    ds = D(lq_path, gt_path, noiseds_path, gtsize, scale)
+    ds = D(lq_path, gt_path, noiseds_path, gtsize, scale,noise_rate_random=noise_rate_random)
     return ds

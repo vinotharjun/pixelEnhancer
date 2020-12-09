@@ -1,10 +1,11 @@
 from enhancer import *
-
+import enhancer
 from .options import *
 from enhancer.data import create_dataloader, create_dataset
 from enhancer.networks import *
 from enhancer.training import GANTrainer, SimpleTrainer
 from enhancer.losses import WassFeatureLoss, FeatureLoss
+import importlib
 
 
 def get_dataloader_from_yml(yml_file_path):
@@ -19,6 +20,7 @@ def get_dataloader_from_yml(yml_file_path):
         ops["datasets"]["train"]["noise_needed"],
         ops["datasets"]["train"]["GT_size"],
         ops["scale"],
+        ops["datasets"]["train"]["noise_rate_random"]
     )
     val_dataset = create_dataset(
         ops["datasets"]["val"]["mode"],
@@ -28,6 +30,7 @@ def get_dataloader_from_yml(yml_file_path):
         ops["datasets"]["val"]["noise_needed"],
         ops["datasets"]["val"]["GT_size"],
         ops["scale"],
+        ops["datasets"]["val"]["noise_rate_random"]
     )
     train_loader = create_dataloader(
         train_dataset,
@@ -69,15 +72,18 @@ def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=T
         nf = opt["structure"]["network_G"]["nf"]
         num_modules = opt["structure"]["network_G"]["num_modules"]
         scale = opt["scale"]
+        model_name = opt["structure"]["network_G"]["which_model_G"]
         if scale in [2, 4, 8, 16]:
             pass
         else:
             scale = 4
-        model = RFDN(in_c, nf, num_modules, out_c, scale)
-    
-    model = model.to(device)
+        net = importlib.import_module("enhancer.networks.{}".format(model_name)).SmallEnhancer
+#         in_nc=3, nf=64, num_modules=6, out_nc=3, upscale=4
+        model = net(in_nc=in_c, nf=nf, num_modules=num_modules, out_nc=out_c, upscale=scale)
+        model = model.to(device)
 
-    
+    if pretrain_path is False:
+        return model 
     if pretrain_path is not None:
         if key is not None:
             model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device)[key], strict=strict)
@@ -210,15 +216,18 @@ def get_trainer_from_yml(
 
 def load_pipeline_from_yml(yml_file_path):
     # load dataloader
+    print("loading dataloader...")
     loaders = get_dataloader_from_yml(yml_file_path)
     train_loader = loaders["train_dataloader"]
     val_loader = loaders["validation_dataloader"]
 
     # load model
+    print("loading models...")
     generator = get_generator_from_yml(yml_file_path)
     # load discriminator
     discriminator = get_discriminator_from_yml(yml_file_path)
     # load trainer
+    print("constructing trainers .....")
     trainer = get_trainer_from_yml(
         yml_file_path=yml_file_path,
         model_G=generator,

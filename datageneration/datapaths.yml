@@ -5,8 +5,8 @@ ffhq:
   source: ".././dataset/ffhq/source"
   target: ".././dataset/ffhq/target"
 df2k:
-  source: ".././dataset/df2k/source"
-  target: ".././dataset/df2k/target"
+  source: "../../storage/data/df2k/HR"
+  target: "../../storage/data/df2k/HR"
 datasets:
   coco: ".././dataset/coco"
   ffhq: ".././dataset/ffhq"
