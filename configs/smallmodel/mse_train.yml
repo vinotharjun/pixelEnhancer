@@ -35,11 +35,11 @@ datasets:
 #### network structures
 structure:
   network_G:
-    which_model_G: imdn 
+    which_model_G: imdn_rtc 
     in_nc: 3
     out_nc: 3
-    nf: 64 
-    num_modules: 8 
+    nf: 20
+    num_modules: 6 
 
 #### path
 pretraining_settings:
