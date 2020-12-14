@@ -246,6 +246,7 @@ class SmallEnhancer(nn.Module):
         self.gct = GCT(num_channels=self.nf*3)
         self.shirking = conv_layer(self.nf*3, self.nf, kernel_size=1)
         upsample_block = pixelshuffle_block
+        self.upsampler1 = upsample_block(self.nf, self.nf, upscale_factor=self.upscale) 
         self.upsampler = upsample_block(self.nf, self.out_nc, upscale_factor=self.upscale)
 
 
@@ -262,8 +263,10 @@ class SmallEnhancer(nn.Module):
         x2 = self.rb_blocks2(x1)
         out = torch.cat([input, x1, x2], dim=1)
         out = self.shirking(self.gct(out))
+        out = self.upsampler1(out)
         out = F.interpolate(out,size=x.size()[2:])
         out = self.rb_blocks6(out, x)
         out = self.upsampler(out)
         input = F.interpolate(x, scale_factor=self.upscale, mode='bilinear', align_corners=False)
         return input + out
+

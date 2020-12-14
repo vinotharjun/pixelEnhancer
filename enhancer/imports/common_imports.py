@@ -24,7 +24,7 @@ from collections import OrderedDict
 import glob
 from shutil import get_terminal_size
 import yaml
-
+from fastprogress.fastprogress import master_bar, progress_bar
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:

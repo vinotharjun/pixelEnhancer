@@ -4,7 +4,7 @@ from .options import *
 from enhancer.data import create_dataloader, create_dataset
 from enhancer.networks import *
 from enhancer.training import GANTrainer, SimpleTrainer
-from enhancer.losses import WassFeatureLoss, FeatureLoss
+from enhancer.losses import *
 import importlib
 
 
@@ -73,12 +73,11 @@ def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=T
         num_modules = opt["structure"]["network_G"]["num_modules"]
         scale = opt["scale"]
         model_name = opt["structure"]["network_G"]["which_model_G"]
-        if scale in [2, 4, 8, 16]:
+        if scale in [2, 4, 8, 16,3,6]:
             pass
         else:
             scale = 4
         net = importlib.import_module("enhancer.networks.{}".format(model_name)).SmallEnhancer
-#         in_nc=3, nf=64, num_modules=6, out_nc=3, upscale=4
         model = net(in_nc=in_c, nf=nf, num_modules=num_modules, out_nc=out_c, upscale=scale)
         model = model.to(device)
 
@@ -107,8 +106,36 @@ def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=T
     return model
 
 
-def get_discriminator_from_yml(yml_file_path):
-    return Discriminator()
+def get_discriminator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=True):
+    if yml_file_path is None:
+        raise Exception("need yml file")
+    opt = parse_yml(yml_file_path)
+    if "network_D" not in opt["pretraining_settings"]:
+        return 
+    in_c = opt["structure"]["network_D"]["in_nc"]
+    out_c = opt["structure"]["network_D"]["out_nc"]
+    model = Discriminator(in_c,out_nc).to(device)
+    if pretrain_path is False:
+        return model 
+    if pretrain_path is not None:
+        if key is not None:
+            model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device)[key], strict=strict)
+            print(f"critic is loaded from {pretrain_path}")
+        else:
+            model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device), strict=strict)
+            print(f"critic is loaded from {pretrain_path}")
+    else:
+        if opt["pretraining_settings"]["network_D"]["want_load"] is True:
+            pretrain_path = opt["pretraining_settings"]["network_D"]["pretrained_model_path"]
+            strict = opt["pretraining_settings"]["network_D"]["pretrained_model_path"]
+            key = opt["pretraining_settings"]["network_D"]["key"]
+            if key is not None:
+                model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device)[key], strict=strict)
+                print(f"critic is loaded from {pretrain_path}")
+            else:
+                model.to(device).load_state_dict(torch.load(pretrain_path,map_location=device), strict=strict)
+                print(f"critic is loaded from {pretrain_path}")
+    return model
 
 
 def get_trainer_from_yml(
@@ -124,6 +151,16 @@ def get_trainer_from_yml(
     opt = parse_yml(yml_file_path)
 
     if opt["type"] == "gan":
+        if opt["train_settings"]["pixel_criterion"] == "l2":
+            criterion = nn.L2Loss()
+        elif opt["train_settings"]["pixel_criterion"] == "WassFeatureLoss":
+            criterion = WassFeatureLoss()
+        elif opt["train_settings"]["pixel_criterion"] == "FeatureLoss":
+            criterion = FeatureLoss()
+        elif opt["train_settings"]["pixel_criterion"] == "CharbonnierLoss":
+            criterion = CharbonnierLoss()
+        else:
+            criterion = nn.L1Loss()
         adversarial_loss_Weight = opt["train_settings"]["gan_weight"]
         opt_beta1 = opt["train_settings"]["beta1_G"]
         opt_beta2 = opt["train_settings"]["beta2_G"]
@@ -166,6 +203,7 @@ def get_trainer_from_yml(
             load_checkpoint_file_path_generator =load_checkpoint_file_path_G,
             load_checkpoint_file_path_critic = load_checkpoint_file_path_D,
             sample_interval=sample_interval,
+            feature_criterion = criterion
         )
         return trainer
     else:
@@ -175,9 +213,10 @@ def get_trainer_from_yml(
             criterion = WassFeatureLoss()
         elif opt["train_settings"]["pixel_criterion"] == "FeatureLoss":
             criterion = FeatureLoss()
+        elif opt["train_settings"]["pixel_criterion"] == "CharbonnierLoss":
+            criterion = CharbonnierLoss()
         else:
             criterion = nn.L1Loss()
-        adversarial_loss_Weight = opt["train_settings"]["gan_weight"]
         opt_beta1 = opt["train_settings"]["beta1_G"]
         opt_beta2 = opt["train_settings"]["beta2_G"]
         wd = opt["train_settings"]["weight_decay_G"]
@@ -194,6 +233,7 @@ def get_trainer_from_yml(
         else:
             load_checkpoint_file_path = None
         sample_interval = opt["train_settings"]["sample_interval"]
+        lr_step_decay = opt["train_settings"]["lr_step_decay"]
 
         trainer = SimpleTrainer(
             generator=model_G,
@@ -210,6 +250,7 @@ def get_trainer_from_yml(
             criterion=criterion,
             load_checkpoint_file_path=load_checkpoint_file_path,
             sample_interval=sample_interval,
+            lr_step_decay = lr_step_decay
         )
         return trainer
 

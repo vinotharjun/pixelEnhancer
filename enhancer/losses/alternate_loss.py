@@ -250,3 +250,13 @@ class PerceptualLoss(nn.Module):
             self.loss_network(fake_high_resolution),
         )
         return perception_loss
+
+class CharbonnierLoss(nn.Module):
+    def __init__(self):
+        super(CharbonnierLoss, self).__init__()
+        self.eps = 1e-6
+    def forward(self, X, Y):
+        diff = torch.add(X, -Y)
+        error = torch.sqrt( diff * diff + self.eps )
+        loss = torch.sum(error) 
+        return loss 

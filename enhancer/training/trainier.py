@@ -2,7 +2,7 @@ from enhancer import *
 from enhancer.losses import WassFeatureLoss, FeatureLoss
 from enhancer.utils import *
 from enhancer.inference import *
-from fastprogress.fastprogress import master_bar, progress_bar
+
 
 
 class GANTrainer:
@@ -25,11 +25,12 @@ class GANTrainer:
         load_checkpoint_file_path_generator=None,
         load_checkpoint_file_path_critic = None,
         sample_interval=100,
+        feature_criterion = WassFeatureLoss().to(device)
     ):
         self.generator = generator.to(device)
         self.discriminator = discriminator.to(device)
         self.train_loader = train_loader
-        self.feat_loss = WassFeatureLoss().to(device)
+        self.feat_loss = feature_criterion
         self.val_loader = val_loader
         self.adv_loss = nn.BCEWithLogitsLoss().to(device)
         self.save_checkpoint_path = save_checkpoint_folder_path
@@ -68,19 +69,24 @@ class GANTrainer:
         is_best=False,
         checkpoint_file_name="checkpoint",
         best_file_name="best",
+        writer=None
     ):
         state["generator_state_dict"] = self.generator.state_dict()
         state["discriminator_state_dict"] = self.discriminator.state_dict()
-        path = self.save_checkpoint_path + "/{}.pt".format(checkpoint_file_name)
+        path = self.save_checkpoint_path + "/{}".format(checkpoint_file_name)
         torch.save(state, path)
+        if writer is not None:
+            writer.write(f"checkpoint saved at {path}")
         if is_best:
-            best_path = self.save_checkpoint_path + "/{}.pt".format(best_file_name)
+            best_path = self.save_checkpoint_path + "/{}".format(best_file_name)
             shutil.copyfile(path, best_path)
+
+            
 
     def load_checkpoint(self,load_generator=False,load_critic=False):
         if load_generator==True:
-            print("loading checkpoint from ", self.load_checkpoint_path)
-            checkpoint = torch.load(self.load_checkpoint_path)
+            print("loading checkpoint from ", self.load_checkpoint_path_generator)
+            checkpoint = torch.load(self.load_checkpoint_path_generator)
             if "ssim" in checkpoint:
                 self.top_ssim = checkpoint["ssim"]
             if "epoch" in checkpoint:
@@ -101,7 +107,7 @@ class GANTrainer:
                 f"Info :check point details are \n epoch : {self.epoch_start} and batch : {self.batch_start} "
             )
 
-    def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=True):
+    def train_model(self, start=0, end=100, b=0, eb=-1, isValidate=False):
         mb = master_bar(range(start, end))
         for epoch in mb:
             mb.child_comment = "epoch {}".format(epoch)
@@ -112,6 +118,15 @@ class GANTrainer:
             self.train(epoch=epoch, b=b, eb=eb, parent=mb)
             if isValidate == True:
                 self.validate(epoch, parent=mb)
+            else:
+                mb.write("No validation enabled, so saving epoch checkpoint only")
+                self.save_checkpoint(
+                    state = {"epoch":str(epoch),"batch":str(-1)},
+                    is_best=False,
+                    checkpoint_file_name=self.save_checkpoint_file_name,
+                    best_file_name=self.save_best_file_name,
+                    writer=mb
+                )
 
     def validate(self, epoch, parent):
         with torch.no_grad():
@@ -219,7 +234,7 @@ class GANTrainer:
             global_losses_a.update(adversarial_loss.detach().item(), lr_imgs.size(0))
 
             # DISCRIMINATOR UPDATE
-
+            
             # Discriminate super-resolution (SR) and high-resolution (HR) images
             score_real = self.discriminator(hr_imgs)
             score_fake = self.discriminator(generated.detach())
@@ -239,7 +254,7 @@ class GANTrainer:
             self.optimizer_D.step()
             losses_d.update(adversarial_loss.detach().item(), hr_imgs.size(0))
             global_losses_d.update(adversarial_loss.detach().item(), hr_imgs.size(0))
-            if i % self.sample_interval == 0:
+            if self.sample_interval != None and i % self.sample_interval == 0 and i>=self.sample_interval:
                 with torch.no_grad():
                     state = {"epoch": str(epoch), "batch": str(i)}
                     self.save_checkpoint(
@@ -273,8 +288,7 @@ class GANTrainer:
                 global_losses_d.avg,
             )
         )
-
-
+        
 class SimpleTrainer:
     def __init__(
         self,
@@ -292,6 +306,7 @@ class SimpleTrainer:
         criterion=nn.L1Loss(),
         load_checkpoint_file_path=None,
         sample_interval=100,
+        lr_step_decay=None
     ):
         self.generator = generator.to(device)
         self.train_loader = train_loader
@@ -306,6 +321,8 @@ class SimpleTrainer:
         if self.sample_interval is not None:
             if self.sample_interval <= 0:
                 self.sample_interval = None
+                
+        self.lr_step_decay = lr_step_decay
             
         self.lr = lr
         load = False
@@ -329,12 +346,12 @@ class SimpleTrainer:
         writer=None
     ):
         state["generator_state_dict"] = self.generator.state_dict()
-        path = self.save_checkpoint_path + "/{}.pt".format(checkpoint_file_name)
+        path = self.save_checkpoint_path + "/{}".format(checkpoint_file_name)
         torch.save(state, path)
         if writer is not None:
             writer.write(f"checkpoint saved at {path}")
         if is_best:
-            best_path = self.save_checkpoint_path + "/{}.pt".format(best_file_name)
+            best_path = self.save_checkpoint_path + "/{}".format(best_file_name)
             shutil.copyfile(path, best_path)
 
     def adjust_learning_rate(self,epoch,step_size=200,gamma=0.5):
@@ -370,8 +387,9 @@ class SimpleTrainer:
             else:
                 b = 0
             self.train(epoch=epoch, b=b, eb=eb, parent=mb)
-#             self.adjust_learning_rate(epoch)
-#             mb.write('adjusting learning rate : epoch ='+str(epoch)+ ' lr = '+str(self.optimizer_G.param_groups[0]['lr']))
+            if self.lr_step_decay is not None:
+                self.adjust_learning_rate(epoch,step_size=self.lr_step_decay)
+                mb.write('adjusting learning rate : epoch ='+str(epoch)+ ' lr = '+str(self.optimizer_G.param_groups[0]['lr']))
             if isValidate == True:
                 self.validate(epoch, parent=mb)
             else:
