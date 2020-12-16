@@ -112,9 +112,7 @@ def get_discriminator_from_yml(yml_file_path, pretrain_path=None, key=None, stri
     opt = parse_yml(yml_file_path)
     if "network_D" not in opt["pretraining_settings"]:
         return 
-    in_c = opt["structure"]["network_D"]["in_nc"]
-    out_c = opt["structure"]["network_D"]["out_nc"]
-    model = Discriminator(in_c,out_nc).to(device)
+    model = Discriminator().to(device)
     if pretrain_path is False:
         return model 
     if pretrain_path is not None:

@@ -38,7 +38,7 @@ structure:
     in_nc: 3
     out_nc: 3
     nf: 64 
-    num_modules: 8 
+    num_modules: 8
   network_D:
     which_model_D: Discriminator
     in_nc: 3
@@ -48,12 +48,12 @@ structure:
 pretraining_settings:
   network_G: 
     want_load: true
-    pretrained_model_path:  "../checkpoints/verysmall_best_charbonnier_x4_imdn_rtc_20_6.pt"
+    pretrained_model_path:  "../checkpoints/imdn_rtc_20_6_gan.pt"
     key: "generator_state_dict"
     strict_load:  true
   network_D: 
     want_load: true
-    pretrained_model_path: "../checkpoints/verysmall_best_charbonnier_x4_imdn_rtc_20_6.pt"
+    pretrained_model_path: "../checkpoints/imdn_rtc_20_6_gan.pt"
     strict_load: true
     key: "discriminator_state_dict"
   
@@ -65,17 +65,17 @@ epoch_settings:
 
 #### training settings: learning rate scheme, loss
 train_settings:
-  lr_G: !!float 2.5e-05
+  lr_G: !!float 1e-3
   weight_decay_G: !!float 0
-  beta1_G: 0
-  beta2_G: 0.999
+  beta1_G: 0.
+  beta2_G: 0.99
   lr_D: !!float 1e-4
-  weight_decay_D: !!float 1e-3
+  weight_decay_D: !!float 1e-5
   pixel_criterion: WassFeatureLoss
   gan_weight: !!float 5e-3
   top_score:  !!int -1
   
   sample_interval: ~
   save_checkpoint_folder_path: "../checkpoints"
-  save_checkpoint_file_name: "verysmall_best_charbonnier_x4_imdn_rtc_20_6.pt"
-  save_bestmodel_file_name: "verysmall_best_charbonnier_x4_imdn_rtc_20_6.pt"
+  save_checkpoint_file_name: "imdn_rtc_20_6_gan.pt"
+  save_bestmodel_file_name: "imdn_rtc_20_6_gan.pt"

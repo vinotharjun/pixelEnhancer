@@ -16,7 +16,7 @@ class SmallEnhancer(nn.Module):
         LR_conv = B.conv_layer(self.nf, self.nf, 3,bias=False)
         upsample_block = B.pixelshuffle_block
         upsampler = upsample_block(self.nf,self.out_nc,self.upscale)
-        upsampler = upsampler(self.nf,self.out_nc,self.upscale)
+#         upsampler = upsampler(self.nf,self.out_nc,self.upscale)
 #         upsampler = B.PixelShuffle_ICNR(self.nf,self.out_nc,scale=self.upscale,blur=False)
         self.model = B.sequential(*fea_conv, B.ShortcutBlock(B.sequential(*rb_blocks, LR_conv)),
                                   *upsampler)

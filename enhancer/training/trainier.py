@@ -210,6 +210,7 @@ class GANTrainer:
             hr_imgs = imgs["hr"].to(device)
 
             generated = self.generator(lr_imgs)
+    
             content_loss = self.feat_loss(generated, hr_imgs)
 
             score_real = self.discriminator(hr_imgs)

@@ -30,22 +30,22 @@ datasets:
     use_shuffle: false
     n_workers: 4  # per GPU
     batch_size: 1
-    GT_size: 512 
+    GT_size: 128 
     color: RGB
 #### network structures
 structure:
   network_G:
-    which_model_G: imdn_rtc 
+    which_model_G: imdn
     in_nc: 3
     out_nc: 3
-    nf: 20
-    num_modules: 6 
+    nf: 64
+    num_modules: 8 
 
 #### path
 pretraining_settings:
   network_G: 
-    want_load: true
-    pretrained_model_path:  "../checkpoints/verysmall_best_charbonnier_x4_imdn_rtc_20_6.pt"
+    want_load: false
+    pretrained_model_path:  "../checkpoints/imdn_rtc_20_6_interpolation.pt"
     key: "generator_state_dict"
     strict_load:  true
   
@@ -57,15 +57,15 @@ epoch_settings:
 
 #### training settings: learning rate scheme, loss
 train_settings:
-  lr_G: !!float 2.5e-05
+  lr_G: !!float 2e-4
   lr_step_decay: 100
   weight_decay_G: !!float 0
   beta1_G: 0.9
   beta2_G: 0.999
-  pixel_criterion: WassFeatureLoss #l1 | l2  #CharbonnierLoss
+  pixel_criterion: l1  #l1 | l2  #CharbonnierLoss
   top_score:  !!int -1
   
   sample_interval: ~
   save_checkpoint_folder_path: "../checkpoints"
-  save_checkpoint_file_name: "gantest.pt"
-  save_bestmodel_file_name: "gantest.pt"
+  save_checkpoint_file_name: "imdn_rtc_20_6_mse_interpolation.pt"
+  save_bestmodel_file_name: "imdn_rtc_20_6_mse_interpolation.pt"
