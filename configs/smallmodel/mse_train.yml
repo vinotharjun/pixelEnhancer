@@ -1,6 +1,6 @@
 #### general settings
 name: train_small_model
-scale: 4
+scale: 2
 type : mse
 
 
@@ -10,10 +10,10 @@ datasets:
     name: train
     mode: LQGT
     noise_rate_random: false
-    noise_needed: false
-    noise_data: ["../../storage/data/df2k/color_noise/","../../storage/data/df2k/jepg_noise/Corrupted_noise/" ]
+    noise_needed: true
+    noise_data: "../../storage/data/df2k/jpeg_noise/Corrupted_noise/" 
     dataroot_GT: ../../storage/data/df2k/HR
-    dataroot_LQ: ../../storage/data/df2k/LRx4
+    dataroot_LQ: ../../storage/data/df2k/LRx2
     use_shuffle: false
     n_workers: 4  # per GPU
     batch_size: 64
@@ -35,17 +35,17 @@ datasets:
 #### network structures
 structure:
   network_G:
-    which_model_G: imdn
+    which_model_G: imdn_rte
     in_nc: 3
     out_nc: 3
-    nf: 64
-    num_modules: 8 
+    nf: 20
+    num_modules: 5
 
 #### path
 pretraining_settings:
   network_G: 
-    want_load: false
-    pretrained_model_path:  "../checkpoints/imdn_rtc_20_6_interpolation.pt"
+    want_load: true
+    pretrained_model_path:  "../checkpoints/imdn_rte_20_5_mse_one.pt"
     key: "generator_state_dict"
     strict_load:  true
   
@@ -57,7 +57,7 @@ epoch_settings:
 
 #### training settings: learning rate scheme, loss
 train_settings:
-  lr_G: !!float 2e-4
+  lr_G: !!float 1e-3  
   lr_step_decay: 100
   weight_decay_G: !!float 0
   beta1_G: 0.9
@@ -67,5 +67,5 @@ train_settings:
   
   sample_interval: ~
   save_checkpoint_folder_path: "../checkpoints"
-  save_checkpoint_file_name: "imdn_rtc_20_6_mse_interpolation.pt"
-  save_bestmodel_file_name: "imdn_rtc_20_6_mse_interpolation.pt"
+  save_checkpoint_file_name: "imdn_rte_20_5_mse_one.pt"
+  save_bestmodel_file_name: "imdn_rte_20_5_mse_one.pt"

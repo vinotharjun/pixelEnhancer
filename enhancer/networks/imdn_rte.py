@@ -21,3 +21,4 @@ class SmallEnhancer(nn.Module):
     def forward(self, input):
         output = self.model(input)
         return output
+

@@ -15,7 +15,7 @@ datasets:
     dataroot_LQ: ../../storage/data/df2k/LRx4
     use_shuffle: false
     n_workers: 4  # per GPU
-    batch_size: 64
+    batch_size: 32
     GT_size: 128
     color: RGB
   val:
@@ -34,7 +34,7 @@ datasets:
 #### network structures
 structure:
   network_G:
-    which_model_G: imdn #imdn_rte #imdn #rfdn  #rtenet #imdn_rte
+    which_model_G: imdn_practice #imdn_rte #imdn #rfdn  #rtenet #imdn_rte
     in_nc: 3
     out_nc: 3
     nf: 64 
@@ -48,12 +48,12 @@ structure:
 pretraining_settings:
   network_G: 
     want_load: true
-    pretrained_model_path:  "../checkpoints/imdn_rtc_20_6_gan.pt"
+    pretrained_model_path:  "../checkpoints/imdn_rtc_20_6_mse_interpolation.pt"
     key: "generator_state_dict"
     strict_load:  true
   network_D: 
-    want_load: true
-    pretrained_model_path: "../checkpoints/imdn_rtc_20_6_gan.pt"
+    want_load: false
+    pretrained_model_path: "../checkpoints/imdn_rtc_20_6_gan1_interpolation.pt"
     strict_load: true
     key: "discriminator_state_dict"
   
@@ -65,17 +65,17 @@ epoch_settings:
 
 #### training settings: learning rate scheme, loss
 train_settings:
-  lr_G: !!float 1e-3
+  lr_G: !!float 1e-4
   weight_decay_G: !!float 0
   beta1_G: 0.
   beta2_G: 0.99
   lr_D: !!float 1e-4
   weight_decay_D: !!float 1e-5
-  pixel_criterion: WassFeatureLoss
+  pixel_criterion: l1
   gan_weight: !!float 5e-3
   top_score:  !!int -1
   
   sample_interval: ~
   save_checkpoint_folder_path: "../checkpoints"
-  save_checkpoint_file_name: "imdn_rtc_20_6_gan.pt"
-  save_bestmodel_file_name: "imdn_rtc_20_6_gan.pt"
+  save_checkpoint_file_name: "imdn_rtc_20_6_gan1_interpolation.pt"
+  save_bestmodel_file_name: "imdn_rtc_20_6_gan1_interpolation.pt"

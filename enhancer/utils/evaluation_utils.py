@@ -81,7 +81,10 @@ class SSIM(torch.nn.Module):
 
 
 def ssim(img1, img2, window_size=11, size_average=True):
-    (_, channel, _, _) = img1.size()
+    if len(img1.size())==4:
+        (_, channel, _, _) = img1.size()
+    else:
+        (channel, _, _) = img1.size()
     window = create_window(window_size, channel)
 
     if img1.is_cuda:
@@ -89,7 +92,7 @@ def ssim(img1, img2, window_size=11, size_average=True):
     window = window.type_as(img1)
 
     return _ssim(img1, img2, window, window_size, channel, size_average)
-
+ 
 
 def psnr(label, outputs, max_val=1.0):
     """
