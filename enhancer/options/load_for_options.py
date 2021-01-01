@@ -57,15 +57,20 @@ def get_generator_from_yml(yml_file_path, pretrain_path=None, key=None, strict=T
         in_c = opt["structure"]["network_G"]["in_nc"]
         out_c = opt["structure"]["network_G"]["out_nc"]
         nf = opt["structure"]["network_G"]["nf"]
-        nb = opt["structure"]["network_G"]["nb"]
-        if opt["scale"] == 2:
-            model = SuperResolution2x(in_c, out_c, nf, nb)
-        elif opt["scale"] == 8:
-            model = SuperResolution8x(in_c, out_c, nf, nb)
-        elif opt["scale"] == 16:
-            model = SuperResolution16x(in_c, out_c, nf, nb)
+        num_modules = opt["structure"]["network_G"]["num_modules"]
+        scale = opt["scale"]
+        model_name = opt["structure"]["network_G"]["which_model_G"]
+        if "gc" in opt["structure"]["network_G"]:
+            gc = opt["structure"]["network_G"]["gc"]
         else:
-            model = SuperResolution4x(in_c, out_c, nf, nb)
+            gc = 32
+        if scale in [2, 4, 8, 16,3,6]:
+            pass
+        else:
+            scale = 4
+        net = importlib.import_module("enhancer.networks.{}".format(model_name)).SmallEnhancer
+        model = net(in_nc=in_c, nf=nf, num_modules=num_modules, out_nc=out_c, upscale=scale, gc=gc)
+        model = model.to(device)
     else:
         in_c = opt["structure"]["network_G"]["in_nc"]
         out_c = opt["structure"]["network_G"]["out_nc"]

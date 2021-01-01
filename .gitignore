@@ -12,6 +12,7 @@ inference_folder/*
 *.mp4
 *.fuse_*
 *.pt
+configs/*
 core
 *.html
 # Distribution / packaging

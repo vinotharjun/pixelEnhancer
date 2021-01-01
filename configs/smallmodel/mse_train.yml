@@ -35,7 +35,7 @@ datasets:
 #### network structures
 structure:
   network_G:
-    which_model_G: imdn_rte
+    which_model_G: esrgan_pixel
     in_nc: 3
     out_nc: 3
     nf: 20
@@ -44,7 +44,7 @@ structure:
 #### path
 pretraining_settings:
   network_G: 
-    want_load: true
+    want_load: false
     pretrained_model_path:  "../checkpoints/imdn_rte_20_5_mse_one.pt"
     key: "generator_state_dict"
     strict_load:  true

@@ -38,11 +38,12 @@ datasets:
 #### network structures
 structure:
   network_G:
-    which_model_G: RRDBNet
+    which_model_G: esrgan_pixel
     in_nc: 3
     out_nc: 3
     nf: 64
     nb: 23
+    gc: 32
   network_D:
     which_model_D: Discriminator
     in_nc: 3
