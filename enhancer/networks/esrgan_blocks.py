@@ -67,7 +67,7 @@ class RRDBNet(nn.Module):
 
 
 class Interpolate(nn.Module):
-    def __init__(self, factor=2, mode="bicubic",align_corners=True):
+    def __init__(self, factor=2, mode="bicubic", align_corners=True):
         super(Interpolate, self).__init__()
         self.interp = nn.functional.interpolate
         self.factor = factor
@@ -75,7 +75,15 @@ class Interpolate(nn.Module):
         self.align_corners = align_corners
 
     def forward(self, x):
-        x = self.interp(x, scale_factor=self.factor, mode=self.mode,align_corners=self.align_corners)
+        if self.mode != "nearest":
+            x = self.interp(
+                x,
+                scale_factor=self.factor,
+                mode=self.mode,
+                align_corners=self.align_corners,
+            )
+        else:
+            x = self.interp(x, scale_factor=self.factor, mode=self.mode)
         return x
 
 
