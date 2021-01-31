@@ -38,6 +38,30 @@ class SmallEnhancer(nn.Module):
                     ]
                 )
             )
+            
+        if self.upscale == 3:
+            self.tail = nn.Sequential(
+                OrderedDict(
+                    [
+                        (
+                            "interpolate1",
+                            Interpolate(factor=3, mode="nearest", align_corners=False),
+                        ),
+                        ("up_conv1", nn.Conv2d(self.nf, self.nf, 3, 1, 1, bias=True)),
+                        ("lrelu1", nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+                        ("hrconv", nn.Conv2d(self.nf, self.nf, 3, 1, 1, bias=True)),
+                        (
+                            "hrconv_lrelu",
+                            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                        ),
+                        (
+                            "conv_last",
+                            nn.Conv2d(self.nf, self.out_nc, 3, 1, 1, bias=True),
+                        ),
+                    ]
+                )
+            )
+            
         elif self.upscale == 6:
             self.tail = nn.Sequential(
                 OrderedDict(
