@@ -4,7 +4,7 @@ from .loss_utils import *
 
 class WassFeatureLoss(nn.Module):
     def __init__(
-        self, layer_wgts=[5, 15, 2], wass_wgts=[3.0, 0.7, 0.01], use_input_norm=True,loss_wgts =[1e-2,1,1]
+        self, layer_wgts=[5, 15, 2], wass_wgts=[3.0, 0.7, 0.01], use_input_norm=True,loss_wgts =[1,1,1]
     ):
 
         super().__init__()
@@ -105,7 +105,7 @@ class WassFeatureLoss(nn.Module):
                 for f_pred, f_targ, w in zip(in_feat, styles, self.wass_wgts)
             ]
         self.metrics = dict(zip(self.metric_names, self.feat_losses))
-        return sum([l*w for l,w in zip(self.feat_losses,self.loss_wgts)])
+        return sum(self.feat_losses)
 
     def __del__(self):
         for i in self.hooks:
