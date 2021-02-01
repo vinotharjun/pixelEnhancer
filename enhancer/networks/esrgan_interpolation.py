@@ -39,7 +39,7 @@ class SmallEnhancer(nn.Module):
                 )
             )
             
-        if self.upscale == 3:
+        elif self.upscale == 3:
             self.tail = nn.Sequential(
                 OrderedDict(
                     [
