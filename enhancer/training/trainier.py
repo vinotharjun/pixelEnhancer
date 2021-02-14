@@ -1,8 +1,6 @@
 from enhancer import *
-from enhancer.losses import WassFeatureLoss, FeatureLoss
 from enhancer.utils import *
 from enhancer.inference import *
-
 
 
 class GANTrainer:
@@ -23,9 +21,9 @@ class GANTrainer:
         save_checkpoint_file_name="checkpoint",
         save_best_file_name="best",
         load_checkpoint_file_path_generator=None,
-        load_checkpoint_file_path_critic = None,
+        load_checkpoint_file_path_critic=None,
         sample_interval=100,
-        feature_criterion = WassFeatureLoss().to(device)
+        feature_criterion=nn.L1Loss(),
     ):
         self.generator = generator.to(device)
         self.discriminator = discriminator.to(device)
@@ -49,7 +47,7 @@ class GANTrainer:
             load_generator = True
         if self.load_checkpoint_path_critic is not None:
             load_critic = True
-        self.load_checkpoint(load_generator,load_critic)
+        self.load_checkpoint(load_generator, load_critic)
         self.optimizer_G = torch.optim.Adam(
             self.generator.parameters(),
             lr=lr_G,
@@ -69,7 +67,7 @@ class GANTrainer:
         is_best=False,
         checkpoint_file_name="checkpoint",
         best_file_name="best",
-        writer=None
+        writer=None,
     ):
         state["generator_state_dict"] = self.generator.state_dict()
         state["discriminator_state_dict"] = self.discriminator.state_dict()
@@ -81,10 +79,8 @@ class GANTrainer:
             best_path = self.save_checkpoint_path + "/{}".format(best_file_name)
             shutil.copyfile(path, best_path)
 
-            
-
-    def load_checkpoint(self,load_generator=False,load_critic=False):
-        if load_generator==True:
+    def load_checkpoint(self, load_generator=False, load_critic=False):
+        if load_generator == True:
             print("loading checkpoint from ", self.load_checkpoint_path_generator)
             checkpoint = torch.load(self.load_checkpoint_path_generator)
             if "ssim" in checkpoint:
@@ -101,7 +97,9 @@ class GANTrainer:
                 self.generator.load_state_dict(checkpoint["generator_state_dict"])
                 print("generator loaded...")
             if load_critic == True and "discriminator_state_dict" in checkpoint:
-                self.discriminator.load_state_dict(checkpoint["discriminator_state_dict"])
+                self.discriminator.load_state_dict(
+                    checkpoint["discriminator_state_dict"]
+                )
                 print("critic loaded...")
             print(
                 f"Info :check point details are \n epoch : {self.epoch_start} and batch : {self.batch_start} "
@@ -121,11 +119,11 @@ class GANTrainer:
             else:
                 mb.write("No validation enabled, so saving epoch checkpoint only")
                 self.save_checkpoint(
-                    state = {"epoch":str(epoch),"batch":str(-1)},
+                    state={"epoch": str(epoch), "batch": str(-1)},
                     is_best=False,
                     checkpoint_file_name=self.save_checkpoint_file_name,
                     best_file_name=self.save_best_file_name,
-                    writer=mb
+                    writer=mb,
                 )
 
     def validate(self, epoch, parent):
@@ -210,7 +208,7 @@ class GANTrainer:
             hr_imgs = imgs["hr"].to(device)
 
             generated = self.generator(lr_imgs)
-    
+
             content_loss = self.feat_loss(generated, hr_imgs)
 
             score_real = self.discriminator(hr_imgs)
@@ -235,7 +233,7 @@ class GANTrainer:
             global_losses_a.update(adversarial_loss.detach().item(), lr_imgs.size(0))
 
             # DISCRIMINATOR UPDATE
-            
+
             # Discriminate super-resolution (SR) and high-resolution (HR) images
             score_real = self.discriminator(hr_imgs)
             score_fake = self.discriminator(generated.detach())
@@ -255,7 +253,11 @@ class GANTrainer:
             self.optimizer_D.step()
             losses_d.update(adversarial_loss.detach().item(), hr_imgs.size(0))
             global_losses_d.update(adversarial_loss.detach().item(), hr_imgs.size(0))
-            if self.sample_interval != None and i % self.sample_interval == 0 and i>=self.sample_interval:
+            if (
+                self.sample_interval != None
+                and i % self.sample_interval == 0
+                and i >= self.sample_interval
+            ):
                 with torch.no_grad():
                     state = {"epoch": str(epoch), "batch": str(i)}
                     self.save_checkpoint(
@@ -289,7 +291,8 @@ class GANTrainer:
                 global_losses_d.avg,
             )
         )
-        
+
+
 class SimpleTrainer:
     def __init__(
         self,
@@ -307,7 +310,7 @@ class SimpleTrainer:
         criterion=nn.L1Loss(),
         load_checkpoint_file_path=None,
         sample_interval=100,
-        lr_step_decay=None
+        lr_step_decay=None,
     ):
         self.generator = generator.to(device)
         self.train_loader = train_loader
@@ -322,9 +325,9 @@ class SimpleTrainer:
         if self.sample_interval is not None:
             if self.sample_interval <= 0:
                 self.sample_interval = None
-                
+
         self.lr_step_decay = lr_step_decay
-            
+
         self.lr = lr
         load = False
         if load_checkpoint_file_path is not None:
@@ -344,7 +347,7 @@ class SimpleTrainer:
         is_best=False,
         checkpoint_file_name="checkpoint_mse",
         best_file_name="best_mse",
-        writer=None
+        writer=None,
     ):
         state["generator_state_dict"] = self.generator.state_dict()
         path = self.save_checkpoint_path + "/{}".format(checkpoint_file_name)
@@ -355,11 +358,11 @@ class SimpleTrainer:
             best_path = self.save_checkpoint_path + "/{}".format(best_file_name)
             shutil.copyfile(path, best_path)
 
-    def adjust_learning_rate(self,epoch,step_size=200,gamma=0.5):
+    def adjust_learning_rate(self, epoch, step_size=200, gamma=0.5):
         factor = epoch // step_size
         lr = self.lr * (gamma ** factor)
         for param_group in self.optimizer_G.param_groups:
-            param_group['lr'] = lr
+            param_group["lr"] = lr
 
     def load_checkpoint(self):
         print("loading checkpoint from ", self.load_checkpoint_path)
@@ -389,20 +392,24 @@ class SimpleTrainer:
                 b = 0
             self.train(epoch=epoch, b=b, eb=eb, parent=mb)
             if self.lr_step_decay is not None:
-                self.adjust_learning_rate(epoch,step_size=self.lr_step_decay)
-                mb.write('adjusting learning rate : epoch ='+str(epoch)+ ' lr = '+str(self.optimizer_G.param_groups[0]['lr']))
+                self.adjust_learning_rate(epoch, step_size=self.lr_step_decay)
+                mb.write(
+                    "adjusting learning rate : epoch ="
+                    + str(epoch)
+                    + " lr = "
+                    + str(self.optimizer_G.param_groups[0]["lr"])
+                )
             if isValidate == True:
                 self.validate(epoch, parent=mb)
             else:
                 mb.write("No validation enabled, so saving epoch checkpoint only")
                 self.save_checkpoint(
-                    state = {"epoch":str(epoch),"batch":str(-1)},
+                    state={"epoch": str(epoch), "batch": str(-1)},
                     is_best=False,
                     checkpoint_file_name=self.save_checkpoint_file_name,
                     best_file_name=self.save_best_file_name,
-                    writer=mb
+                    writer=mb,
                 )
-                
 
     def validate(self, epoch, parent):
         with torch.no_grad():
@@ -473,7 +480,11 @@ class SimpleTrainer:
             losses_c.update(content_loss.detach().item(), lr_imgs.size(0))
             global_loss_c.update(content_loss.detach().item(), lr_imgs.size(0))
 
-            if self.sample_interval != None and i % self.sample_interval == 0 and i>=self.sample_interval:
+            if (
+                self.sample_interval != None
+                and i % self.sample_interval == 0
+                and i >= self.sample_interval
+            ):
                 with torch.no_grad():
                     state = {"epoch": str(epoch), "batch": str(i)}
                     self.save_checkpoint(
@@ -481,7 +492,7 @@ class SimpleTrainer:
                         is_best=False,
                         checkpoint_file_name=self.save_checkpoint_file_name,
                         best_file_name=self.save_best_file_name,
-                        writer = parent
+                        writer=parent,
                     )
                     self.generator.eval()
                     parent.write(
