@@ -4,7 +4,7 @@ from .options import *
 from enhancer.data import create_dataloader, create_dataset
 from enhancer.networks import *
 from enhancer.training import GANTrainer, SimpleTrainer
-from enhancer.losses import *
+from enhancer.losses import LossCalculator
 import importlib
 
 
@@ -172,6 +172,16 @@ def get_discriminator_from_yml(
     return model
 
 
+def get_loss(loss_details):
+    if type(loss_details) != []:
+        raise Exception("expecting loss details as array of tuples")
+    all_losses = []
+    for loss_data, loss_name in loss_details:
+        loss = importlib.import_module("enhancer.losses.{}".format(loss_name)).Loss
+        all_losses += [loss(**loss_data)]
+    return LossCalculator(loss_detail=all_losses)
+
+
 def get_trainer_from_yml(
     yml_file_path,
     model_G,
@@ -185,16 +195,10 @@ def get_trainer_from_yml(
     opt = parse_yml(yml_file_path)
 
     if opt["type"] == "gan":
-        if opt["train_settings"]["pixel_criterion"] == "l2":
-            criterion = nn.L2Loss()
-        elif opt["train_settings"]["pixel_criterion"] == "WassFeatureLoss":
-            criterion = WassFeatureLoss()
-        elif opt["train_settings"]["pixel_criterion"] == "FeatureLoss":
-            criterion = FeatureLoss()
-        elif opt["train_settings"]["pixel_criterion"] == "CharbonnierLoss":
-            criterion = CharbonnierLoss()
+        if opt["train_settings"]["pixel_criterion"] is not None:
+            criterion = get_loss(opt["train_settings"]["pixel_criterion"])
         else:
-            criterion = nn.L1Loss()
+            raise Exception("needed loss details")
         adversarial_loss_Weight = opt["train_settings"]["gan_weight"]
         opt_beta1 = opt["train_settings"]["beta1_G"]
         opt_beta2 = opt["train_settings"]["beta2_G"]
@@ -245,16 +249,11 @@ def get_trainer_from_yml(
         )
         return trainer
     else:
-        if opt["train_settings"]["pixel_criterion"] == "l2":
-            criterion = nn.L2Loss()
-        elif opt["train_settings"]["pixel_criterion"] == "WassFeatureLoss":
-            criterion = WassFeatureLoss()
-        elif opt["train_settings"]["pixel_criterion"] == "FeatureLoss":
-            criterion = FeatureLoss()
-        elif opt["train_settings"]["pixel_criterion"] == "CharbonnierLoss":
-            criterion = CharbonnierLoss()
+        if opt["train_settings"]["pixel_criterion"] is not None:
+            criterion = get_loss(opt["train_settings"]["pixel_criterion"])
         else:
-            criterion = nn.L1Loss()
+            raise Exception("needed loss details")
+
         opt_beta1 = opt["train_settings"]["beta1_G"]
         opt_beta2 = opt["train_settings"]["beta2_G"]
         wd = opt["train_settings"]["weight_decay_G"]
