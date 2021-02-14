@@ -4,7 +4,11 @@ from .loss_utils import *
 
 class WassFeatureLoss(nn.Module):
     def __init__(
-        self, layer_wgts=[5, 15, 2], wass_wgts=[3.0, 0.7, 0.01], use_input_norm=True
+        self,
+        layer_wgts=[5, 15, 2],
+        wass_wgts=[3.0, 0.7, 0.01],
+        use_input_norm=True,
+        loss_wgts=[1, 1, 1],
     ):
 
         super().__init__()
@@ -30,6 +34,7 @@ class WassFeatureLoss(nn.Module):
         self.hooks = [SaveFeatures(i) for i in self.loss_features]
         self.wgts = layer_wgts
         self.wass_wgts = wass_wgts
+        self.loss_wgts = loss_wgts
         self.metric_names = (
             ["pixel"]
             + [f"feat_{i}" for i in range(len(layer_ids))]
@@ -89,8 +94,9 @@ class WassFeatureLoss(nn.Module):
             target = (target - self.mean) / self.std
         out_feat = self._make_features(target, clone=True)
         in_feat = self._make_features(input)
-        # self.feat_losses = [self.base_loss(input, target)]
-        self.feat_losses = [
+        self.feat_losses = [self.base_loss(input, target)]
+
+        self.feat_losses += [
             self.base_loss(f_in, f_out) * w
             for f_in, f_out, w in zip(in_feat, out_feat, self.wgts)
         ]

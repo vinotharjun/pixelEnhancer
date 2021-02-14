@@ -1,4 +1,4 @@
-from enhancer.imports.torch_imports import *
+from enhancer import *
 
 
 class VGG(nn.Module):
@@ -7,7 +7,7 @@ class VGG(nn.Module):
         feature_layer=34,
         use_bn=False,
         use_input_norm=True,
-        device=torch.device("cuda"),
+        device=device,
     ):
         super(VGG, self).__init__()
         self.use_input_norm = use_input_norm
