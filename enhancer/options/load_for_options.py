@@ -173,7 +173,7 @@ def get_discriminator_from_yml(
 
 
 def get_loss(loss_details):
-    if type(loss_details) != []:
+    if type(loss_details) != type([]):
         raise Exception("expecting loss details as array of tuples")
     all_losses = []
     for loss_data, loss_name in loss_details:
