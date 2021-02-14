@@ -179,7 +179,7 @@ def get_loss(loss_details):
     for loss_data, loss_name in loss_details:
         loss = importlib.import_module("enhancer.losses.{}".format(loss_name)).Loss
         all_losses += [loss(**loss_data)]
-    return LossCalculator(loss_detail=all_losses)
+    return LossCalculator(loss_details=all_losses)
 
 
 def get_trainer_from_yml(
